@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
 local MobDied = Remotes:WaitForChild("MobDied") :: RemoteEvent
+local GatherFeedback = Remotes:WaitForChild("GatherFeedback") :: RemoteEvent
 
 local function showFloatingText(text: string, color: Color3?)
 	local bb = Instance.new("BillboardGui")
@@ -49,5 +50,14 @@ MobDied.OnClientEvent:Connect(function(mobId: unknown, goldAmt: unknown)
 	end
 	if typeof(mobId) == "string" then
 		showFloatingText(mobId .. " slain!", Color3.fromRGB(255, 80, 80))
+	end
+end)
+
+GatherFeedback.OnClientEvent:Connect(function(resourceId: string, quantity: number, position: Vector3, itemName: string)
+	print("[GatherClient] Received feedback:", resourceId, quantity, itemName)
+	if typeof(quantity) == "number" then
+		showFloatingText("+" .. tostring(quantity) .. " " .. itemName, Color3.fromRGB(100, 255, 100))
+	else
+		print("[GatherClient] Invalid quantity type:", typeof(quantity))
 	end
 end)

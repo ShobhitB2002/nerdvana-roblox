@@ -29,7 +29,7 @@ local function onPlayerDied(player: Player)
 				if invSlot.id == itemId then
 					invSlot.durability = (invSlot.durability or 0) - 10
 					if invSlot.durability <= 0 then
-						DataServer.RemoveFromInventory(player, itemId, 1)
+						DataServer.RemoveFromInventory(player, itemId, 1);
 						(data.equipped :: { [string]: string? })[slotName] = nil
 					end
 					break

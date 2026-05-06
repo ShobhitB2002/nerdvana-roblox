@@ -166,13 +166,13 @@ do
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 	})
-	local tabs = { "Materials", "Gear", "Tools", "Consumables", "Quest", "Currency" }
+	local tabs = { "All", "Materials", "Gear", "Tools", "Consumables", "Quest", "Currency" }
 	for i, name in ipairs(tabs) do
 		textButton({
 			Name = name .. "Tab",
 			Parent = tabRow,
-			Position = UDim2.new((i - 1) / 6, 0, 0, 0),
-			Size = UDim2.new(1 / 6, 0, 1, 0),
+			Position = UDim2.new((i - 1) / 7, 0, 0, 0),
+			Size = UDim2.new(1 / 7, 0, 1, 0),
 			Text = name,
 			Font = Enum.Font.GothamBold,
 			TextScaled = true,

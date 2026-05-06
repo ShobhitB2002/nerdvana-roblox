@@ -27,37 +27,37 @@ export type SpawnPoint = {
 }
 
 local SpawnPoints: { SpawnPoint } = {
-	-- Forest biome (northwest) - Wolves and Bears
-	{ mobId = "Wolf", pos = Vector3.new(-200, 1, -200), count = 8 },
-	{ mobId = "Wolf", pos = Vector3.new(-150, 1, -150), count = 6 },
-	{ mobId = "Bear", pos = Vector3.new(-220, 1, -220), count = 4 },
-	{ mobId = "ForestMiniboss", pos = Vector3.new(-180, 1, -180), count = 1 },
+	-- Forest biome (northwest) - Wolves and Bears (scaled for 1024x1024)
+	{ mobId = "Wolf", pos = Vector3.new(-400, 1, -400), count = 8 },
+	{ mobId = "Wolf", pos = Vector3.new(-300, 1, -300), count = 6 },
+	{ mobId = "Bear", pos = Vector3.new(-440, 1, -440), count = 4 },
+	{ mobId = "ForestMiniboss", pos = Vector3.new(-360, 1, -360), count = 1 },
 	
-	-- Mountain biome (northeast) - Elementals and Bandits
-	{ mobId = "Elemental", pos = Vector3.new(200, 1, -200), count = 6 },
-	{ mobId = "Elemental", pos = Vector3.new(220, 1, -220), count = 5 },
-	{ mobId = "Bandit", pos = Vector3.new(180, 1, -180), count = 7 },
-	{ mobId = "MountainMiniboss", pos = Vector3.new(200, 1, -200), count = 1 },
+	-- Mountain biome (northeast) - Elementals and Bandits (scaled for 1024x1024)
+	{ mobId = "Elemental", pos = Vector3.new(400, 1, -400), count = 6 },
+	{ mobId = "Elemental", pos = Vector3.new(440, 1, -440), count = 5 },
+	{ mobId = "Bandit", pos = Vector3.new(360, 1, -360), count = 7 },
+	{ mobId = "MountainMiniboss", pos = Vector3.new(400, 1, -400), count = 1 },
 	
-	-- Plains biome (southwest) - Wolves and Bandits
-	{ mobId = "Wolf", pos = Vector3.new(-200, 1, 200), count = 6 },
-	{ mobId = "Bandit", pos = Vector3.new(-180, 1, 180), count = 5 },
-	{ mobId = "Bandit", pos = Vector3.new(-220, 1, 220), count = 4 },
+	-- Plains biome (southwest) - Wolves and Bandits (scaled for 1024x1024)
+	{ mobId = "Wolf", pos = Vector3.new(-400, 1, 400), count = 6 },
+	{ mobId = "Bandit", pos = Vector3.new(-360, 1, 360), count = 5 },
+	{ mobId = "Bandit", pos = Vector3.new(-440, 1, 440), count = 4 },
 	
-	-- Swamp biome (southeast) - Swamp Beasts and Wolves
-	{ mobId = "SwampBeast", pos = Vector3.new(200, 1, 200), count = 7 },
-	{ mobId = "SwampBeast", pos = Vector3.new(180, 1, 180), count = 5 },
-	{ mobId = "Wolf", pos = Vector3.new(220, 1, 220), count = 4 },
+	-- Swamp biome (southeast) - Swamp Beasts and Wolves (scaled for 1024x1024)
+	{ mobId = "SwampBeast", pos = Vector3.new(400, 1, 400), count = 7 },
+	{ mobId = "SwampBeast", pos = Vector3.new(360, 1, 360), count = 5 },
+	{ mobId = "Wolf", pos = Vector3.new(440, 1, 440), count = 4 },
 	
-	-- Central area - Mixed encounters
-	{ mobId = "Wolf", pos = Vector3.new(120, 1, 0), count = 4 },
-	{ mobId = "Bandit", pos = Vector3.new(-120, 1, 0), count = 4 },
-	{ mobId = "Elemental", pos = Vector3.new(0, 1, 120), count = 3 },
+	-- Central area - Mixed encounters (scaled for 1024x1024)
+	{ mobId = "Wolf", pos = Vector3.new(240, 1, 0), count = 4 },
+	{ mobId = "Bandit", pos = Vector3.new(-240, 1, 0), count = 4 },
+	{ mobId = "Elemental", pos = Vector3.new(0, 1, 240), count = 3 },
 	
-	-- Boss encounters (outer edges)
-	{ mobId = "WolfBoss", pos = Vector3.new(350, 1, 100), count = 1 },
-	{ mobId = "BanditCaptain", pos = Vector3.new(-350, 1, -100), count = 1 },
-	{ mobId = "BeastBoss", pos = Vector3.new(0, 1, -450), count = 1 },
+	-- Boss encounters (outer edges) (scaled for 1024x1024)
+	{ mobId = "WolfBoss", pos = Vector3.new(700, 1, 200), count = 1 },
+	{ mobId = "BanditCaptain", pos = Vector3.new(-700, 1, -200), count = 1 },
+	{ mobId = "BeastBoss", pos = Vector3.new(0, 1, -900), count = 1 },
 }
 
 local function getMobsFolder(): Folder

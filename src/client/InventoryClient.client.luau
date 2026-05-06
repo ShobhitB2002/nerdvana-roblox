@@ -33,6 +33,30 @@ local RarityColors: { [string]: Color3 } = {
 local currentTab = "Materials"
 local currentInventory: { Shared.InventorySlot } = {}
 
+local function flattenCategorizedInventory(categorizedInv: Shared.CategorizedInventory): { Shared.InventorySlot }
+	local flat: { Shared.InventorySlot } = {}
+	
+	-- Add "All Items" category
+	if currentTab == "All" then
+		for _, category in pairs(categorizedInv) do
+			for _, slot in ipairs(category) do
+				table.insert(flat, slot)
+			end
+		end
+		return flat
+	end
+	
+	-- Add specific category
+	local category = categorizedInv[currentTab:lower()]
+	if category then
+		for _, slot in ipairs(category) do
+			table.insert(flat, slot)
+		end
+	end
+	
+	return flat
+end
+
 local function renderInventory()
 	for _, child in ipairs(itemList:GetChildren()) do
 		if child:IsA("Frame") then
@@ -40,12 +64,13 @@ local function renderInventory()
 		end
 	end
 	local y = 0
-	for _, slot in ipairs(currentInventory) do
+	
+	-- Get the appropriate inventory based on current tab
+	local inventoryToRender = flattenCategorizedInventory(currentInventory)
+	
+	for _, slot in ipairs(inventoryToRender) do
 		local def = ItemDB.Get(slot.id)
 		if not def then
-			continue
-		end
-		if def.type ~= currentTab then
 			continue
 		end
 
@@ -100,7 +125,7 @@ local function renderInventory()
 		if def.type == "Gear" or def.type == "Tools" then
 			local equipBtn = Instance.new("TextButton")
 			equipBtn.Size = UDim2.new(0, 55, 0, 22)
-			equipBtn.Position = UDim2.new(1, -60, 0.5, -11)
+			equipBtn.Position = UDim2.new(1, -120, 0.5, -11)
 			equipBtn.Text = "Equip"
 			equipBtn.Font = Enum.Font.GothamBold
 			equipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -112,6 +137,39 @@ local function renderInventory()
 				GatherResource:FireServer("equip", slot.id)
 			end)
 		end
+
+		-- Add inventory management buttons for stackable items
+		if def.stackable and slot.quantity and slot.quantity > 1 then
+			local splitBtn = Instance.new("TextButton")
+			splitBtn.Size = UDim2.new(0, 55, 0, 22)
+			splitBtn.Position = UDim2.new(1, -125, 0.5, -11)
+			splitBtn.Text = "Split"
+			splitBtn.Font = Enum.Font.GothamBold
+			splitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+			splitBtn.BackgroundColor3 = Color3.fromRGB(120, 60, 60)
+			splitBtn.BorderSizePixel = 0
+			splitBtn.TextScaled = true
+			splitBtn.Parent = row
+			splitBtn.MouseButton1Click:Connect(function()
+				print("[InventoryClient] Split clicked for:", slot.id, "quantity:", slot.quantity)
+				GatherResource:FireServer("split", slot.id)
+			end)
+		end
+
+		-- Add Drop button for all items
+		local dropBtn = Instance.new("TextButton")
+		dropBtn.Size = UDim2.new(0, 55, 0, 22)
+		dropBtn.Position = UDim2.new(1, -60, 0.5, -11)
+		dropBtn.Text = "Drop"
+		dropBtn.Font = Enum.Font.GothamBold
+		dropBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		dropBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+		dropBtn.BorderSizePixel = 0
+		dropBtn.TextScaled = true
+		dropBtn.Parent = row
+		dropBtn.MouseButton1Click:Connect(function()
+			GatherResource:FireServer("drop", slot.id)
+		end)
 
 		y += 55
 	end
@@ -148,10 +206,64 @@ UserInputService.InputBegan:Connect(function(input: InputObject, processed: bool
 end)
 
 UpdateInventory.OnClientEvent:Connect(function(inventory: unknown, _equipped: unknown)
+	print("[InventoryClient] Received inventory update, type:", typeof(inventory))
 	if typeof(inventory) == "table" then
-		currentInventory = inventory :: { Shared.InventorySlot }
+		-- Handle both old flat inventory and new categorized inventory
+		if #inventory > 0 then
+			-- Old flat inventory format
+			print("[InventoryClient] Using flat inventory format, items:", #inventory)
+			currentInventory = inventory :: { Shared.InventorySlot }
+		else
+			-- New categorized inventory format
+			print("[InventoryClient] Using categorized inventory format")
+			currentInventory = inventory :: Shared.CategorizedInventory
+		end
+	else
+		print("[InventoryClient] Invalid inventory type received:", typeof(inventory))
 	end
 	renderInventory()
+end)
+
+-- Add inventory management buttons
+local manageRow = Instance.new("Frame")
+manageRow.Size = UDim2.new(1, -20, 0, 30)
+manageRow.Position = UDim2.new(0, 10, 0, 10)
+manageRow.BackgroundTransparency = 1
+manageRow.Parent = background
+
+itemList.Size = UDim2.new(1, -20, 1, -110)
+itemList.Position = UDim2.new(0, 10, 0, 100)
+
+local autoStackBtn = Instance.new("TextButton")
+autoStackBtn.Size = UDim2.new(0, 80, 0, 25)
+autoStackBtn.Position = UDim2.new(0, 0, 0, 0)
+autoStackBtn.Text = "Auto Stack"
+autoStackBtn.Font = Enum.Font.GothamBold
+autoStackBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoStackBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 60)
+autoStackBtn.BorderSizePixel = 0
+autoStackBtn.TextScaled = true
+autoStackBtn.Parent = manageRow
+autoStackBtn.MouseButton1Click:Connect(function()
+	print("[InventoryClient] Auto Stack clicked")
+	-- Implement auto-stack functionality
+	GatherResource:FireServer("autoStack")
+end)
+
+local autoArrangeBtn = Instance.new("TextButton")
+autoArrangeBtn.Size = UDim2.new(0, 80, 0, 25)
+autoArrangeBtn.Position = UDim2.new(0, 90, 0, 0)
+autoArrangeBtn.Text = "Auto Arrange"
+autoArrangeBtn.Font = Enum.Font.GothamBold
+autoArrangeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoArrangeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 120)
+autoArrangeBtn.BorderSizePixel = 0
+autoArrangeBtn.TextScaled = true
+autoArrangeBtn.Parent = manageRow
+autoArrangeBtn.MouseButton1Click:Connect(function()
+	print("[InventoryClient] Auto Arrange clicked")
+	-- Implement auto-arrange functionality
+	GatherResource:FireServer("autoArrange")
 end)
 
 background.Visible = false

@@ -1,39 +1,53 @@
 --!strict
--- IslandGenerator: Expanded tutorial island with multiple biomes (512x512 stud play space)
+-- IslandGenerator: Expanded tutorial island with multiple biomes (1024x1024 stud play space)
 
 local RunService = game:GetService("RunService")
 local workspace = game:GetService("Workspace")
 
+print("[IslandGenerator] Script loaded, checking server environment...")
+
 if not RunService:IsServer() then
+	print("[IslandGenerator] ERROR: Not running on server!")
 	return
 end
 
--- Expanded map dimensions
-local ISLAND_HALF = 256
-local PLAZA_SIZE = 120
-local WATER_HALF = 300
-local BIOME_SIZE = 180
+print("[IslandGenerator] Server confirmed, starting generation...")
+
+-- Expanded map dimensions (1024x1024)
+local ISLAND_HALF = 512
+local PLAZA_SIZE = 160
+local WATER_HALF = 600
+local BIOME_SIZE = 360
+
+print("[IslandGenerator] Creating workspace folders...")
 
 local Island = Instance.new("Folder")
 Island.Name = "Island"
 Island.Parent = workspace
+print("[IslandGenerator] Island folder created")
 
 local Stations = Instance.new("Folder")
 Stations.Name = "Stations"
 Stations.Parent = workspace
+print("[IslandGenerator] Stations folder created")
 
 local NPCs = Instance.new("Folder")
 NPCs.Name = "NPCs"
 NPCs.Parent = workspace
+print("[IslandGenerator] NPCs folder created")
 
 local Portals = Instance.new("Folder")
 Portals.Name = "Portals"
 Portals.Parent = workspace
+print("[IslandGenerator] Portals folder created")
 
 if not workspace:FindFirstChild("Mobs") then
 	local Mobs = Instance.new("Folder")
 	Mobs.Name = "Mobs"
 	Mobs.Parent = workspace
+	print("[IslandGenerator] Mobs folder created")
+else
+	print("[IslandGenerator] Mobs folder already exists")
 end
 
 local function makePart(
@@ -98,9 +112,11 @@ local function makeLabel(part: BasePart, text: string)
 end
 
 -- Ground (top surface y = 0). Avoid overlapping other parts at y=0 to prevent z-fighting flicker.
+print("[IslandGenerator] Creating ground...")
 local ground = makePart("Ground", Vector3.new(ISLAND_HALF * 2, 2, ISLAND_HALF * 2), Vector3.new(0, -1, 0), "Bright green", true, Island)
 ground.Material = Enum.Material.Grass
 ground.CastShadow = false
+print("[IslandGenerator] Ground created successfully")
 
 -- Create multiple biomes
 local function createBiome(name: string, offset: Vector3, size: number, groundColor: string, groundMaterial: Enum.Material)
@@ -115,17 +131,25 @@ local function createBiome(name: string, offset: Vector3, size: number, groundCo
 	return biomeFolder
 end
 
--- Forest biome (northwest)
-local forestBiome = createBiome("Forest", Vector3.new(-180, 0, -180), BIOME_SIZE, "Bright green", Enum.Material.Grass)
+-- Forest biome (northwest) - scaled for 1024x1024 map
+print("[IslandGenerator] Creating Forest biome...")
+local forestBiome = createBiome("Forest", Vector3.new(-360, 0, -360), BIOME_SIZE, "Bright green", Enum.Material.Grass)
+print("[IslandGenerator] Forest biome created")
 
--- Mountain biome (northeast)
-local mountainBiome = createBiome("Mountain", Vector3.new(180, 0, -180), BIOME_SIZE, "Medium stone grey", Enum.Material.Stone)
+-- Mountain biome (northeast) - scaled for 1024x1024 map
+print("[IslandGenerator] Creating Mountain biome...")
+local mountainBiome = createBiome("Mountain", Vector3.new(360, 0, -360), BIOME_SIZE, "Medium stone grey", Enum.Material.Slate)
+print("[IslandGenerator] Mountain biome created")
 
--- Plains biome (southwest)
-local plainsBiome = createBiome("Plains", Vector3.new(-180, 0, 180), BIOME_SIZE, "Sand yellow", Enum.Material.Sand)
+-- Plains biome (southwest) - scaled for 1024x1024 map
+print("[IslandGenerator] Creating Plains biome...")
+local plainsBiome = createBiome("Plains", Vector3.new(-360, 0, 360), BIOME_SIZE, "Sand yellow", Enum.Material.Sand)
+print("[IslandGenerator] Plains biome created")
 
--- Swamp biome (southeast)
-local swampBiome = createBiome("Swamp", Vector3.new(180, 0, 180), BIOME_SIZE, "Dark green", Enum.Material.Grass)
+-- Swamp biome (southeast) - scaled for 1024x1024 map
+print("[IslandGenerator] Creating Swamp biome...")
+local swampBiome = createBiome("Swamp", Vector3.new(360, 0, 360), BIOME_SIZE, "Dark green", Enum.Material.Grass)
+print("[IslandGenerator] Swamp biome created")
 
 local water = makePart("Water", Vector3.new(WATER_HALF * 2, 1, WATER_HALF * 2), Vector3.new(0, -4.5, 0), "Bright blue", true, Island)
 water.Material = Enum.Material.SmoothPlastic
@@ -149,18 +173,18 @@ local function makePath(p1: Vector3, p2: Vector3, width: number)
 	path.CFrame = CFrame.lookAt(mid + Vector3.new(0, pathY, 0), mid + dir + Vector3.new(0, pathY, 0))
 end
 
--- Cardinal paths (~400 studs from center toward edges for ~25s walks)
-local pathEnd = 400
+-- Cardinal paths (~600 studs from center toward edges for ~35s walks)
+local pathEnd = 600
 makePath(Vector3.new(0, 0, PLAZA_SIZE / 2), Vector3.new(0, 0, pathEnd), 12)
 makePath(Vector3.new(0, 0, -PLAZA_SIZE / 2), Vector3.new(0, 0, -pathEnd), 12)
 makePath(Vector3.new(PLAZA_SIZE / 2, 0, 0), Vector3.new(pathEnd, 0, 0), 12)
 makePath(Vector3.new(-PLAZA_SIZE / 2, 0, 0), Vector3.new(-pathEnd, 0, 0), 12)
 
 -- Diagonal paths to biomes
-makePath(Vector3.new(-30, 0, -30), Vector3.new(-180, 0, -180), 10)
-makePath(Vector3.new(30, 0, -30), Vector3.new(180, 0, -180), 10)
-makePath(Vector3.new(-30, 0, 30), Vector3.new(-180, 0, 180), 10)
-makePath(Vector3.new(30, 0, 30), Vector3.new(180, 0, 180), 10)
+makePath(Vector3.new(-30, 0, -30), Vector3.new(-250, 0, -250), 10)
+makePath(Vector3.new(30, 0, -30), Vector3.new(250, 0, -250), 10)
+makePath(Vector3.new(-30, 0, 30), Vector3.new(-250, 0, 250), 10)
+makePath(Vector3.new(30, 0, 30), Vector3.new(250, 0, 250), 10)
 
 -- Faction statues (plaza corners)
 local statuePositions = {
@@ -198,24 +222,29 @@ local function makeBuilding(name: string, pos: Vector3, size: Vector3, roofColor
 	return folder
 end
 
--- Village ring (inner district)
-makeBuilding("Guide_House", Vector3.new(-52, 0, -8), Vector3.new(14, 9, 14), "Bright blue", "White")
-makeBuilding("Sawmill_House", Vector3.new(52, 0, -8), Vector3.new(16, 9, 14), "Bright orange", "Bright yellow")
-makeBuilding("Tanner_House", Vector3.new(-8, 0, 52), Vector3.new(14, 9, 14), "Reddish brown", "Sand yellow")
-makeBuilding("Blacksmith_House", Vector3.new(-8, 0, -52), Vector3.new(16, 9, 14), "Dark grey", "Medium stone grey")
-makeBuilding("Merchant_House", Vector3.new(-52, 0, 52), Vector3.new(14, 9, 14), "Bright green", "White")
-makeBuilding("QuestElder_House", Vector3.new(52, 0, 52), Vector3.new(14, 9, 14), "Gold", "Tan")
+-- Village ring (inner district) - scaled for larger map
+makeBuilding("Guide_House", Vector3.new(-104, 0, -16), Vector3.new(14, 9, 14), "Bright blue", "White")
+makeBuilding("Sawmill_House", Vector3.new(104, 0, -16), Vector3.new(16, 9, 14), "Bright orange", "Bright yellow")
+makeBuilding("Tanner_House", Vector3.new(-16, 0, 104), Vector3.new(14, 9, 14), "Reddish brown", "Sand yellow")
+makeBuilding("Blacksmith_House", Vector3.new(-16, 0, -104), Vector3.new(16, 9, 14), "Dark grey", "Medium stone grey")
+makeBuilding("Merchant_House", Vector3.new(-104, 0, 104), Vector3.new(14, 9, 14), "Bright green", "White")
+makeBuilding("QuestElder_House", Vector3.new(104, 0, 104), Vector3.new(14, 9, 14), "Gold", "Tan")
 
--- Stations along paths (spread; crafting loop ~150–220 studs)
+-- Stations along paths (spread; crafting loop ~200–400 studs for larger map)
 local stationDefs = {
-	{ name = "Sawmill", pos = Vector3.new(210, 1, 35), color = "Bright orange", size = Vector3.new(8, 5, 10) },
-	{ name = "TanningRack", pos = Vector3.new(-35, 1, 210), color = "Reddish brown", size = Vector3.new(6, 4, 4) },
-	{ name = "Forge", pos = Vector3.new(-210, 1, -35), color = "Dark grey", size = Vector3.new(8, 5, 8) },
-	{ name = "CraftingBench", pos = Vector3.new(35, 1, -210), color = "Bright yellow", size = Vector3.new(6, 3, 4) },
-	{ name = "MerchantStall", pos = Vector3.new(-150, 1, -150), color = "Bright green", size = Vector3.new(8, 4, 6) },
-	{ name = "ExchangeBoard", pos = Vector3.new(150, 1, -150), color = "Medium stone grey", size = Vector3.new(5, 6, 1) },
+	{ name = "Sawmill", pos = Vector3.new(300, 1, 50), color = "Bright orange", size = Vector3.new(8, 5, 10) },
+	{ name = "TanningRack", pos = Vector3.new(-50, 1, 300), color = "Reddish brown", size = Vector3.new(6, 4, 4) },
+	{ name = "Forge", pos = Vector3.new(-300, 1, -50), color = "Dark grey", size = Vector3.new(8, 5, 8) },
+	{ name = "CraftingBench", pos = Vector3.new(50, 1, -300), color = "Bright yellow", size = Vector3.new(6, 3, 4) },
+	{ name = "MerchantStall", pos = Vector3.new(-200, 1, -200), color = "Bright green", size = Vector3.new(8, 4, 6) },
+	{ name = "ExchangeBoard", pos = Vector3.new(200, 1, -200), color = "Medium stone grey", size = Vector3.new(5, 6, 1) },
+	-- Additional stations for larger map
+	{ name = "Smeltery", pos = Vector3.new(180, 1, 180), color = "Dark grey", size = Vector3.new(10, 6, 8) },
+	{ name = "Stonecutter", pos = Vector3.new(-180, 1, 180), color = "Medium stone grey", size = Vector3.new(8, 5, 8) },
 }
+print("[IslandGenerator] Creating production stations...")
 for _, sd in ipairs(stationDefs) do
+	print("[IslandGenerator] Creating station: " .. sd.name)
 	local sp = makePart(sd.name, sd.size, sd.pos, sd.color, true, Stations)
 	sp.Material = Enum.Material.SmoothPlastic
 	makeLabel(sp, sd.name)
@@ -233,19 +262,23 @@ for _, sd in ipairs(stationDefs) do
 		prompt.Enabled = false
 		makeLabel(sp, "Exchange Board\n[Coming Soon]")
 	end
+	print("[IslandGenerator] Station created: " .. sd.name)
 end
+print("[IslandGenerator] All stations created successfully")
 
 local npcDefs = {
-	{ name = "Guide", pos = Vector3.new(-44, 1, -8), color = "Bright blue" },
-	{ name = "SawmillMaster", pos = Vector3.new(44, 1, -8), color = "Bright orange" },
-	{ name = "Tanner", pos = Vector3.new(-8, 1, 44), color = "Reddish brown" },
-	{ name = "Blacksmith", pos = Vector3.new(-8, 1, -44), color = "Dark grey" },
-	{ name = "Merchant", pos = Vector3.new(-44, 1, 44), color = "Bright green" },
-	{ name = "QuestElder", pos = Vector3.new(44, 1, 44), color = "Gold" },
-	{ name = "PortalKeeper", pos = Vector3.new(0, 1, -125), color = "Medium lilac" },
+	{ name = "Guide", pos = Vector3.new(-88, 1, -16), color = "Bright blue" },
+	{ name = "SawmillMaster", pos = Vector3.new(88, 1, -16), color = "Bright orange" },
+	{ name = "Tanner", pos = Vector3.new(-16, 1, 88), color = "Reddish brown" },
+	{ name = "Blacksmith", pos = Vector3.new(-16, 1, -88), color = "Dark grey" },
+	{ name = "Merchant", pos = Vector3.new(-88, 1, 88), color = "Bright green" },
+	{ name = "QuestElder", pos = Vector3.new(88, 1, 88), color = "Gold" },
+	{ name = "PortalKeeper", pos = Vector3.new(0, 1, -250), color = "Medium lilac" },
 }
 
+print("[IslandGenerator] Creating NPCs...")
 for _, nd in ipairs(npcDefs) do
+	print("[IslandGenerator] Creating NPC: " .. nd.name)
 	local body = makePart(nd.name .. "_Body", Vector3.new(2.2, 3.2, 2.2), nd.pos, nd.color, true, NPCs)
 	body.Material = Enum.Material.SmoothPlastic
 	local head = makePart(nd.name .. "_Head", Vector3.new(2.2, 2.2, 2.2), nd.pos + Vector3.new(0, 2.6, 0), nd.color, true, NPCs)
@@ -260,7 +293,9 @@ for _, nd in ipairs(npcDefs) do
 	prompt.KeyboardKeyCode = Enum.KeyCode.F
 	prompt.MaxActivationDistance = 12
 	prompt.Parent = body
+	print("[IslandGenerator] NPC created: " .. nd.name)
 end
+print("[IslandGenerator] All NPCs created successfully")
 
 math.randomseed(os.time())
 
@@ -300,7 +335,7 @@ local function plantOre(pos: Vector3, tier: number, oreType: string)
 	local color = if oreType == "raw_ore" then "Dark grey" else "Medium stone grey"
 	local size = Vector3.new(3, 2.5, 3)
 	local ore = makePart("Ore", size, pos + Vector3.new(0, 1.25, 0), color, true, folder)
-	ore.Material = if oreType == "raw_ore" then Enum.Material.Stone else Enum.Material.Concrete
+	ore.Material = if oreType == "raw_ore" then Enum.Material.Slate else Enum.Material.Concrete
 	ore.Shape = Enum.PartType.Ball
 	
 	local rtag = Instance.new("StringValue")
@@ -327,7 +362,7 @@ local function plantStone(pos: Vector3, tier: number)
 	
 	local size = Vector3.new(4, 3, 4)
 	local stone = makePart("Stone", size, pos + Vector3.new(0, 1.5, 0), "Medium stone grey", true, folder)
-	stone.Material = Enum.Material.Stone
+	stone.Material = Enum.Material.Slate
 	
 	local rtag = Instance.new("StringValue")
 	rtag.Name = "ResourceType"
@@ -348,71 +383,85 @@ end
 
 -- Expanded tree placement with biome-specific distribution
 
--- Forest biome (northwest) - Dense T1-T2 trees
-for i = 1, 50 do
-	local angle = (i / 50) * math.pi * 2
-	local radius = 60 + math.random(-30, 30)
-	local pos = Vector3.new(-180, 0, -180) + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+-- Forest biome (northwest) - Dense T1-T2 trees (doubled)
+print("[IslandGenerator] Creating Forest biome trees...")
+for i = 1, 100 do
+	local angle = (i / 100) * math.pi * 2
+	local radius = 120 + math.random(-40, 40)
+	local pos = Vector3.new(-360, 0, -360) + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
 	plantTree(pos, math.random(1, 2), false)
 end
+print("[IslandGenerator] Forest trees created: 100")
 
--- Mountain biome (northeast) - Sparse T2 trees, more ore nodes
-for i = 1, 20 do
-	local angle = (i / 20) * math.pi * 2
-	local radius = 60 + math.random(-25, 25)
-	local pos = Vector3.new(180, 0, -180) + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
-	plantTree(pos, 2, false)
-end
-
--- Add ore nodes to mountain biome
-for i = 1, 30 do
-	local angle = (i / 30) * math.pi * 2
-	local radius = 50 + math.random(-20, 20)
-	local pos = Vector3.new(180, 0, -180) + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
-	plantOre(pos, math.random(1, 2), "raw_ore")
-end
-
--- Add stone nodes to mountain biome
-for i = 1, 20 do
-	local angle = (i / 20) * math.pi * 2
-	local radius = 40 + math.random(-15, 15)
-	local pos = Vector3.new(180, 0, -180) + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
-	plantStone(pos, math.random(1, 2))
-end
-
--- Plains biome (southwest) - Moderate T1 trees
-for i = 1, 30 do
-	local angle = (i / 30) * math.pi * 2
-	local radius = 60 + math.random(-20, 20)
-	local pos = Vector3.new(-180, 0, 180) + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
-	plantTree(pos, 1, false)
-end
-
--- Swamp biome (southeast) - Dense T1 trees
+-- Mountain biome (northeast) - Sparse T2 trees, more ore nodes (doubled)
+print("[IslandGenerator] Creating Mountain biome trees...")
 for i = 1, 40 do
 	local angle = (i / 40) * math.pi * 2
-	local radius = 60 + math.random(-25, 25)
-	local pos = Vector3.new(180, 0, 180) + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+	local radius = 120 + math.random(-40, 40)
+	local pos = Vector3.new(360, 0, -360) + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+	plantTree(pos, 2, false)
+end
+print("[IslandGenerator] Mountain trees created: 40")
+
+-- Add ore nodes to mountain biome (doubled)
+print("[IslandGenerator] Creating Mountain biome ore nodes...")
+for i = 1, 60 do
+	local angle = (i / 60) * math.pi * 2
+	local radius = 100 + math.random(-30, 30)
+	local pos = Vector3.new(360, 0, -360) + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+	plantOre(pos, math.random(1, 2), "raw_ore")
+end
+print("[IslandGenerator] Mountain ore nodes created: 60")
+
+-- Add stone nodes to mountain biome (doubled)
+print("[IslandGenerator] Creating Mountain biome stone nodes...")
+for i = 1, 40 do
+	local angle = (i / 40) * math.pi * 2
+	local radius = 80 + math.random(-20, 20)
+	local pos = Vector3.new(360, 0, -360) + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+	plantStone(pos, math.random(1, 2))
+end
+print("[IslandGenerator] Mountain stone nodes created: 40")
+
+-- Plains biome (southwest) - Moderate T1 trees (doubled)
+print("[IslandGenerator] Creating Plains biome trees...")
+for i = 1, 60 do
+	local angle = (i / 60) * math.pi * 2
+	local radius = 120 + math.random(-30, 30)
+	local pos = Vector3.new(-360, 0, 360) + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
 	plantTree(pos, 1, false)
 end
+print("[IslandGenerator] Plains trees created: 60")
 
--- Central area trees
-for i = 1, 15 do
-	local angle = (i / 15) * math.pi * 2
-	local radius = 140 + math.random(-20, 20)
+-- Swamp biome (southeast) - Dense T1 trees (doubled)
+print("[IslandGenerator] Creating Swamp biome trees...")
+for i = 1, 80 do
+	local angle = (i / 80) * math.pi * 2
+	local radius = 120 + math.random(-40, 40)
+	local pos = Vector3.new(360, 0, 360) + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+	plantTree(pos, 1, false)
+end
+print("[IslandGenerator] Swamp trees created: 80")
+
+-- Central area trees (doubled)
+print("[IslandGenerator] Creating Central area trees...")
+for i = 1, 30 do
+	local angle = (i / 30) * math.pi * 2
+	local radius = 280 + math.random(-30, 30)
 	local pos = Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
 	plantTree(pos, 1, false)
 end
+print("[IslandGenerator] Central trees created: 30")
 
--- Corrupted portal (north path)
-local portalZ = -200
-local portalBase = makePart("CorruptedPortal_Base", Vector3.new(12, 1, 12), Vector3.new(0, 0.5, portalZ), "Dark purple", true, Portals)
+-- Corrupted portal (north path) - scaled for larger map
+local portalZ = -400
+local portalBase = makePart("CorruptedPortal_Base", Vector3.new(24, 2, 24), Vector3.new(0, 0.5, portalZ), "Dark purple", true, Portals)
 portalBase.Material = Enum.Material.Neon
 
-local portalFrame = makePart("CorruptedPortal_Frame", Vector3.new(12, 14, 1.2), Vector3.new(0, 7, portalZ), "Black", true, Portals)
+local portalFrame = makePart("CorruptedPortal_Frame", Vector3.new(24, 28, 2.4), Vector3.new(0, 7, portalZ), "Black", true, Portals)
 portalFrame.Material = Enum.Material.SmoothPlastic
 
-local portalInner = makePart("CorruptedPortal_Inner", Vector3.new(9, 11, 0.6), Vector3.new(0, 7, portalZ), "Dark purple", true, Portals)
+local portalInner = makePart("CorruptedPortal_Inner", Vector3.new(18, 22, 1.2), Vector3.new(0, 7, portalZ), "Dark purple", true, Portals)
 portalInner.Material = Enum.Material.Neon
 portalInner.Transparency = 0.5
 
@@ -430,4 +479,12 @@ pval.Name = "PortalUnlocked"
 pval.Value = false
 pval.Parent = Portals
 
-print("[IslandGenerator] Island built successfully.")
+print("[IslandGenerator] Island built successfully!")
+print("[IslandGenerator] TOTALS CREATED:")
+print("[IslandGenerator] - Trees: 310 total (100 Forest, 40 Mountain, 60 Plains, 80 Swamp, 30 Central)")
+print("[IslandGenerator] - Ore nodes: 60 total (Mountain biome)")
+print("[IslandGenerator] - Stone nodes: 40 total (Mountain biome)")
+print("[IslandGenerator] - Production stations: 8 total")
+print("[IslandGenerator] - NPCs: 7 total")
+print("[IslandGenerator] - Map size: 1024x1024 studs")
+print("[IslandGenerator] Generation complete!")
