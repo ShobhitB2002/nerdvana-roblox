@@ -1,0 +1,9 @@
+# Project place file
+/my-roblox-game.rbxlx
+/Nerdvana.rbxlx
+
+# Roblox Studio lock files
+/*.rbxlx.lock
+/*.rbxl.lock
+
+sourcemap.json

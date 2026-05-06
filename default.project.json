@@ -1,0 +1,110 @@
+{
+  "name": "Nerdvana",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "Modules": {
+        "$className": "Folder",
+        "ItemDB": { "$path": "src/ReplicatedStorage/Modules/ItemDB.luau" },
+        "RecipeDB": { "$path": "src/ReplicatedStorage/Modules/RecipeDB.luau" },
+        "MasteryDB": { "$path": "src/ReplicatedStorage/Modules/MasteryDB.luau" },
+        "RarityRoller": { "$path": "src/ReplicatedStorage/Modules/RarityRoller.luau" },
+        "WeightSystem": { "$path": "src/ReplicatedStorage/Modules/WeightSystem.luau" },
+        "QuestDB": { "$path": "src/ReplicatedStorage/Modules/QuestDB.luau" },
+        "MobDB": { "$path": "src/ReplicatedStorage/Modules/MobDB.luau" },
+        "Shared": { "$path": "src/ReplicatedStorage/Modules/Shared.luau" }
+      },
+      "Remotes": {
+        "$className": "Folder",
+        "GatherResource": { "$className": "RemoteEvent" },
+        "RefineResource": { "$className": "RemoteEvent" },
+        "CraftItem": { "$className": "RemoteEvent" },
+        "OpenInventory": { "$className": "RemoteEvent" },
+        "UpdateInventory": { "$className": "RemoteEvent" },
+        "UpdateMastery": { "$className": "RemoteEvent" },
+        "UpdateHUD": { "$className": "RemoteEvent" },
+        "CombatHit": { "$className": "RemoteEvent" },
+        "MobDied": { "$className": "RemoteEvent" },
+        "PlayerDied": { "$className": "RemoteEvent" },
+        "OpenStation": { "$className": "RemoteEvent" },
+        "DialogueEvent": { "$className": "RemoteEvent" },
+        "BossDefeated": { "$className": "RemoteEvent" },
+        "UnlockPortal": { "$className": "RemoteEvent" },
+        "EnterPortal": { "$className": "RemoteEvent" },
+        "QuestUpdate": { "$className": "RemoteEvent" },
+        "GatherFeedback": { "$className": "RemoteEvent" }
+      }
+    },
+
+    "ServerScriptService": {
+      "DataServer": { "$path": "src/server/DataServer.luau" },
+      "GameManager": { "$path": "src/server/GameManager.server.luau" },
+      "IslandGenerator": { "$path": "src/server/IslandGenerator.server.luau" },
+      "MobAI": { "$path": "src/server/MobAI.server.luau" },
+      "GatheringServer": { "$path": "src/server/GatheringServer.server.luau" },
+      "CraftingServer": { "$path": "src/server/CraftingServer.server.luau" },
+      "RefinementServer": { "$path": "src/server/RefinementServer.server.luau" },
+      "CombatServer": { "$path": "src/server/CombatServer.server.luau" },
+      "DeathServer": { "$path": "src/server/DeathServer.server.luau" },
+      "BossServer": { "$path": "src/server/BossServer.luau" },
+      "PortalServer": { "$path": "src/server/PortalServer.server.luau" },
+      "NPCDialogServer": { "$path": "src/server/NPCDialogServer.server.luau" }
+    },
+
+    "StarterPlayer": {
+      "$properties": {
+        "CameraMaxZoomDistance": 128,
+        "CameraMinZoomDistance": 2,
+        "CharacterWalkSpeed": 16
+      },
+      "StarterPlayerScripts": {
+        "GuiSetup": { "$path": "src/client/GuiSetup.client.luau" },
+        "MainClient": { "$path": "src/client/MainClient.client.luau" },
+        "CameraAndControls": { "$path": "src/client/CameraAndControls.client.luau" },
+        "Sprint": { "$path": "src/client/Sprint.client.luau" },
+        "HUDClient": { "$path": "src/client/HUDClient.client.luau" },
+        "InventoryClient": { "$path": "src/client/InventoryClient.client.luau" },
+        "MasteryClient": { "$path": "src/client/MasteryClient.client.luau" },
+        "CombatClient": { "$path": "src/client/CombatClient.client.luau" },
+        "GatherClient": { "$path": "src/client/GatherClient.client.luau" },
+        "GatherEffects": { "$path": "src/client/GatherEffects.client.luau" },
+        "DialogueClient": { "$path": "src/client/DialogueClient.client.luau" },
+        "StationClient": { "$path": "src/client/StationClient.client.luau" },
+        "QuestClient": { "$path": "src/client/QuestClient.client.luau" }
+      }
+    },
+
+    "Workspace": {
+      "$properties": {
+        "FilteringEnabled": true
+      },
+      "SpawnLocation": {
+        "$className": "SpawnLocation",
+        "$properties": {
+          "Anchored": true,
+          "CanCollide": false,
+          "Neutral": true,
+          "Position": [0, 4, 0],
+          "Size": [6, 1, 6]
+        }
+      }
+    },
+
+    "Lighting": {
+      "$properties": {
+        "Ambient": [0.5, 0.5, 0.5],
+        "Brightness": 2,
+        "GlobalShadows": true,
+        "Outlines": false,
+        "Technology": "Voxel"
+      }
+    },
+
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
+  }
+}
