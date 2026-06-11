@@ -9,6 +9,7 @@ end
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataServer = require(script.Parent.DataServer)
+local QuestServer = require(script.Parent.QuestServer)
 local RecipeDB = require(ReplicatedStorage.Modules.RecipeDB)
 local Shared = require(ReplicatedStorage.Modules.Shared)
 local RarityRoller = require(ReplicatedStorage.Modules.RarityRoller)
@@ -17,7 +18,6 @@ local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
 local CraftItem = Remotes:WaitForChild("CraftItem") :: RemoteEvent
 local UpdateInventory = Remotes:WaitForChild("UpdateInventory") :: RemoteEvent
 local UpdateMastery = Remotes:WaitForChild("UpdateMastery") :: RemoteEvent
-local QuestUpdate = Remotes:WaitForChild("QuestUpdate") :: RemoteEvent
 
 CraftItem.OnServerEvent:Connect(function(player: Player, recipeId: unknown)
 	if typeof(recipeId) ~= "string" then
@@ -33,16 +33,24 @@ CraftItem.OnServerEvent:Connect(function(player: Player, recipeId: unknown)
 		return
 	end
 
-	local ok, missing = Shared.HasItems(data.inventory, recipe.inputs)
+	local ok, missing = Shared.HasItemsCategorized(data.inventory, recipe.inputs)
 	if not ok then
 		CraftItem:FireClient(player, false, "Missing: " .. tostring(missing))
 		return
 	end
 
 	if recipe.previousTier then
-		local _, slot = Shared.FindInInventory(data.inventory, recipe.previousTier)
+		local _, _, slot = Shared.FindInCategorizedInventory(data.inventory, recipe.previousTier)
 		if not slot then
 			CraftItem:FireClient(player, false, "Need previous tier item")
+			return
+		end
+	end
+
+	local goldCost = recipe.goldCost or 0
+	if goldCost > 0 then
+		if not DataServer.SpendGold(player, goldCost) then
+			CraftItem:FireClient(player, false, "Need " .. tostring(goldCost) .. " Gold")
 			return
 		end
 	end
@@ -59,7 +67,7 @@ CraftItem.OnServerEvent:Connect(function(player: Player, recipeId: unknown)
 	UpdateInventory:FireClient(player, data.inventory, data.equipped)
 	CraftItem:FireClient(player, true, recipe.output, rarity)
 
-	QuestUpdate:FireClient(player, "craft", recipeId, 1)
+	QuestServer.Progress(player, "craft", recipeId, 1)
 end)
 
 print("[RefinementServer] Ready.")

@@ -1,5 +1,5 @@
 --!strict
--- QuestClient
+-- QuestClient: renders server-authoritative quest state
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -16,8 +16,26 @@ local QuestDB = require(ReplicatedStorage.Modules.QuestDB)
 local hud = PlayerGui:WaitForChild("HUD") :: ScreenGui
 local tracker = hud:WaitForChild("QuestTrackerFrame") :: Frame
 
-local activeQuestId = "q1_gather_wood"
+local activeQuestId = ""
 local objectiveProgress: { [string]: number } = {}
+
+local function notify(text: string, color: Color3?, duration: number?)
+	local notifGui = PlayerGui:FindFirstChild("NotificationGui")
+	if notifGui and notifGui:IsA("ScreenGui") then
+		local frame = notifGui:FindFirstChild("NotifFrame")
+		if frame and frame:IsA("Frame") then
+			local lbl = frame:FindFirstChildOfClass("TextLabel")
+			if lbl and lbl:IsA("TextLabel") then
+				lbl.Text = text
+				lbl.TextColor3 = color or Color3.fromRGB(255, 255, 100)
+				frame.Visible = true
+				task.delay(duration or 4, function()
+					frame.Visible = false
+				end)
+			end
+		end
+	end
+end
 
 local function updateTrackerUI()
 	local quest = QuestDB.Get(activeQuestId)
@@ -71,91 +89,33 @@ local function updateTrackerUI()
 	tracker.Size = UDim2.new(0, 220, 0, y + 5)
 end
 
-local function checkQuestCompletion()
-	local quest = QuestDB.Get(activeQuestId)
-	if not quest then
+type QuestState = {
+	activeQuestId: string?,
+	progress: { [string]: number }?,
+	justCompleted: string?,
+}
+
+QuestUpdate.OnClientEvent:Connect(function(state: unknown)
+	if typeof(state) ~= "table" then
 		return
 	end
-	local allDone = true
-	for _, obj in ipairs(quest.objectives) do
-		local key = obj.item or obj.mob or obj.target or obj.recipeId or "?"
-		local progress = objectiveProgress[key] or 0
-		if progress < (obj.qty or 1) then
-			allDone = false
-			break
-		end
-	end
-	if allDone then
-		local notifGui = PlayerGui:FindFirstChild("NotificationGui")
-		if notifGui and notifGui:IsA("ScreenGui") then
-			local frame = notifGui:FindFirstChild("NotifFrame")
-			if frame and frame:IsA("Frame") then
-				local lbl = frame:FindFirstChildOfClass("TextLabel")
-				if lbl and lbl:IsA("TextLabel") then
-					lbl.Text = "Quest Complete: " .. quest.title
-					frame.Visible = true
-					task.delay(4, function()
-						frame.Visible = false
-					end)
-				end
-			end
-		end
-		if quest.nextQuest then
-			objectiveProgress = {}
-			activeQuestId = quest.nextQuest
-			updateTrackerUI()
-		end
-	end
-end
+	local s = state :: QuestState
 
-QuestUpdate.OnClientEvent:Connect(function(actionType: unknown, key: unknown, qty: unknown)
-	if typeof(actionType) ~= "string" then
-		return
-	end
-	local quest = QuestDB.Get(activeQuestId)
-	if not quest then
-		return
-	end
-
-	local qAmt = if typeof(qty) == "number" then qty else 1
-
-	for _, obj in ipairs(quest.objectives) do
-		local objKey = obj.item or obj.mob or obj.target or obj.recipeId or "?"
-		local matches = false
-		if actionType == "collect" and obj.type == "collect" and obj.item == key then
-			matches = true
-		elseif actionType == "kill" and obj.type == "kill" and obj.mob == key then
-			matches = true
-		elseif actionType == "craft" and obj.type == "craft" and obj.recipeId == key then
-			matches = true
-		elseif actionType == "interact" and obj.type == "interact" and obj.target == key then
-			matches = true
-		end
-		if matches then
-			objectiveProgress[objKey] = (objectiveProgress[objKey] or 0) + qAmt
+	if typeof(s.justCompleted) == "string" then
+		local done = QuestDB.Get(s.justCompleted)
+		if done then
+			local rewardText = if done.rewards.gold > 0 then " (+" .. tostring(done.rewards.gold) .. " Gold)" else ""
+			notify("Quest Complete: " .. done.title .. rewardText, Color3.fromRGB(80, 220, 80))
 		end
 	end
 
+	activeQuestId = if typeof(s.activeQuestId) == "string" then s.activeQuestId else ""
+	objectiveProgress = if typeof(s.progress) == "table" then s.progress :: { [string]: number } else {}
 	updateTrackerUI()
-	checkQuestCompletion()
 end)
 
 UnlockPortal.OnClientEvent:Connect(function()
-	local notifGui = PlayerGui:FindFirstChild("NotificationGui")
-	if notifGui and notifGui:IsA("ScreenGui") then
-		local frame = notifGui:FindFirstChild("NotifFrame")
-		if frame and frame:IsA("Frame") then
-			local lbl = frame:FindFirstChildOfClass("TextLabel")
-			if lbl and lbl:IsA("TextLabel") then
-				lbl.Text = "Corrupted Portal Unlocked! Seek the Portal Keeper."
-				lbl.TextColor3 = Color3.fromRGB(180, 60, 255)
-				frame.Visible = true
-				task.delay(6, function()
-					frame.Visible = false
-				end)
-			end
-		end
-	end
+	notify("Corrupted Portal Unlocked! Seek the Portal Keeper.", Color3.fromRGB(180, 60, 255), 6)
 end)
 
 EnterPortal.OnClientEvent:Connect(function(success: unknown, reason: unknown)
@@ -171,43 +131,21 @@ EnterPortal.OnClientEvent:Connect(function(success: unknown, reason: unknown)
 		else
 			overlay.Parent = PlayerGui
 		end
-
 		task.delay(1.5, function()
 			overlay:Destroy()
 		end)
 
-		local notifGui = PlayerGui:FindFirstChild("NotificationGui")
-		if notifGui and notifGui:IsA("ScreenGui") then
-			local frame = notifGui:FindFirstChild("NotifFrame")
-			if frame and frame:IsA("Frame") then
-				local lbl = frame:FindFirstChildOfClass("TextLabel")
-				if lbl and lbl:IsA("TextLabel") then
-					lbl.Text = "Entering Corrupted Zone. Better drops. Harder enemies."
-					lbl.TextColor3 = Color3.fromRGB(200, 80, 255)
-					frame.Visible = true
-					task.delay(5, function()
-						frame.Visible = false
-					end)
-				end
-			end
+		if reason == "returned" then
+			notify("Back in the village. Safe and sound.", Color3.fromRGB(120, 220, 120), 4)
+		else
+			notify("Entering Corrupted Zone. Better drops. Harder enemies.", Color3.fromRGB(200, 80, 255), 5)
 		end
 	else
-		local notifGui = PlayerGui:FindFirstChild("NotificationGui")
-		if notifGui and notifGui:IsA("ScreenGui") then
-			local frame = notifGui:FindFirstChild("NotifFrame")
-			if frame and frame:IsA("Frame") then
-				local lbl = frame:FindFirstChildOfClass("TextLabel")
-				if lbl and lbl:IsA("TextLabel") then
-					lbl.Text = tostring(reason or "Portal is locked.")
-					lbl.TextColor3 = Color3.fromRGB(255, 80, 80)
-					frame.Visible = true
-					task.delay(3, function()
-						frame.Visible = false
-					end)
-				end
-			end
-		end
+		notify(tostring(reason or "Portal is locked."), Color3.fromRGB(255, 80, 80), 3)
 	end
 end)
 
 updateTrackerUI()
+
+local RequestSync = Remotes:WaitForChild("RequestSync") :: RemoteEvent
+RequestSync:FireServer()

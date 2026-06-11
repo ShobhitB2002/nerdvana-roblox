@@ -17,7 +17,7 @@ local GatherResource = Remotes:WaitForChild("GatherResource") :: RemoteEvent
 local UpdateInventory = Remotes:WaitForChild("UpdateInventory") :: RemoteEvent
 
 GatherResource.OnServerEvent:Connect(function(player: Player, action: unknown, itemId: unknown)
-	if action ~= "equip" or typeof(itemId) ~= "string" then
+	if typeof(itemId) ~= "string" then
 		return
 	end
 	local data = DataServer.Get(player)
@@ -25,7 +25,7 @@ GatherResource.OnServerEvent:Connect(function(player: Player, action: unknown, i
 		return
 	end
 
-	local _, slot = Shared.FindInInventory(data.inventory, itemId)
+	local _, _, slot = Shared.FindInCategorizedInventory(data.inventory, itemId)
 	if not slot then
 		return
 	end
@@ -33,16 +33,35 @@ GatherResource.OnServerEvent:Connect(function(player: Player, action: unknown, i
 	if not def then
 		return
 	end
-	if def.type == "Gear" then
-		local slot = def.slot
-		if slot == "helmet" or slot == "chest" or slot == "boots" or slot == "bag" then
-			data.equipped[slot] = itemId
+
+	if action == "equip" then
+		if def.type == "Gear" then
+			local gearSlot = def.slot
+			if gearSlot == "helmet" or gearSlot == "chest" or gearSlot == "boots" or gearSlot == "bag" then
+				data.equipped[gearSlot] = itemId
+			else
+				data.equipped.weapon = itemId
+			end
+		elseif def.type == "Tools" then
+			data.equipped.tool = itemId
 		else
-			data.equipped.weapon = itemId
+			return
 		end
-	elseif def.type == "Tools" then
-		data.equipped.tool = itemId
+	elseif action == "use" then
+		if def.type ~= "Consumables" or not def.stats or not def.stats.healAmount then
+			return
+		end
+		local char = player.Character
+		local hum = if char then char:FindFirstChildOfClass("Humanoid") else nil
+		if not hum or hum.Health <= 0 then
+			return
+		end
+		DataServer.RemoveFromInventory(player, itemId, 1)
+		hum.Health = math.min(hum.MaxHealth, hum.Health + def.stats.healAmount)
+	else
+		return
 	end
+
 	UpdateInventory:FireClient(player, data.inventory, data.equipped)
 	DataServer.PushHUD(player)
 end)

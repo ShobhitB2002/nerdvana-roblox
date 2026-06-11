@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 
-local player = Players.LocalPlayer
+local _player = Players.LocalPlayer
 local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
 local GatherFeedback = Remotes:WaitForChild("GatherFeedback") :: RemoteEvent
 

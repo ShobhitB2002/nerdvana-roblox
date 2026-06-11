@@ -25,20 +25,21 @@ local function onPlayerDied(player: Player)
 
 	for slotName, itemId in pairs(data.equipped) do
 		if itemId and typeof(itemId) == "string" then
-			for _, invSlot in ipairs(data.inventory) do
-				if invSlot.id == itemId then
-					invSlot.durability = (invSlot.durability or 0) - 10
-					if invSlot.durability <= 0 then
-						DataServer.RemoveFromInventory(player, itemId, 1);
-						(data.equipped :: { [string]: string? })[slotName] = nil
-					end
-					break
+			local _, _, invSlot = Shared.FindInCategorizedInventory(data.inventory, itemId)
+			if invSlot then
+				invSlot.durability = (invSlot.durability or 0) - 10
+				if invSlot.durability <= 0 then
+					DataServer.RemoveFromInventory(player, itemId, 1);
+					(data.equipped :: { [string]: string? })[slotName] = nil
 				end
 			end
 		end
 	end
 
-	local dropped = Shared.RandomDrop(data.inventory)
+	-- Respawning returns you to the village; you are no longer in the corrupted zone
+	data.isCorrupted = false
+
+	local dropped = Shared.RandomDropCategorized(data.inventory)
 	local dropPos: Vector3
 	local char = player.Character
 	if char and char.PrimaryPart then

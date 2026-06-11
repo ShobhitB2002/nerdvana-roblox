@@ -1,38 +1,17 @@
 --!strict
--- GameManager: Bootstraps server systems (DataServer must load first)
-
-local success, result = pcall(function()
-	return require(script.Parent.DataServer)
-end)
-if not success then
-	warn("[GameManager] Failed to load DataServer: " .. tostring(result))
-	return
-end
+-- GameManager: Bootstraps shared server modules early.
+-- The .server.luau Scripts in ServerScriptService run on their own;
+-- only ModuleScripts (DataServer, QuestServer, BossServer) need requiring.
 
 print("[Nerdvana] GameManager starting...")
 
--- Load systems with error handling
-local systems = {
-	"IslandGenerator",
-	"MobAI", 
-	"GatheringServer",
-	"CraftingServer",
-	"RefinementServer",
-	"CombatServer",
-	"DeathServer",
-	"PortalServer",
-	"NPCDialogServer"
-}
-
-for _, system in ipairs(systems) do
-	local success, result = pcall(function()
-		return require(script.Parent[system])
-	end)
-	if success then
-		print("[GameManager] " .. system .. " loaded successfully")
-	else
-		warn("[GameManager] Failed to load " .. system .. ": " .. tostring(result))
-	end
+local ok, err = pcall(function()
+	require(script.Parent.DataServer)
+	require(script.Parent.QuestServer)
+	require(script.Parent.BossServer)
+end)
+if ok then
+	print("[Nerdvana] All systems loaded.")
+else
+	warn("[GameManager] Module bootstrap failed: " .. tostring(err))
 end
-
-print("[Nerdvana] All systems loaded.")

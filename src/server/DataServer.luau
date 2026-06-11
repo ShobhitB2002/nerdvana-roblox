@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = require(ReplicatedStorage.Modules.Shared)
 local WeightSystem = require(ReplicatedStorage.Modules.WeightSystem)
+local ItemDB = require(ReplicatedStorage.Modules.ItemDB)
 
 export type Equipped = {
 	helmet: string?,
@@ -179,6 +180,16 @@ function DataServer.AddGold(player: Player, amount: number)
 	end
 end
 
+function DataServer.SpendGold(player: Player, amount: number): boolean
+	local d = PlayerData[player.UserId]
+	if not d or d.gold < amount then
+		return false
+	end
+	d.gold -= amount
+	DataServer.PushHUD(player)
+	return true
+end
+
 function DataServer.AddMastery(player: Player, line: string, xp: number)
 	local d = PlayerData[player.UserId]
 	if d and d.mastery[line] ~= nil then
@@ -232,6 +243,8 @@ local function loadData(player: Player)
 	end
 
 	local d = PlayerData[player.UserId] :: PlayerSave
+	-- Players always respawn in the main village, never inside the corrupted zone
+	d.isCorrupted = false
 	DataServer.PushHUD(player)
 	UpdateInventory:FireClient(player, d.inventory, d.equipped)
 	UpdateMastery:FireClient(player, d.mastery)
@@ -239,6 +252,18 @@ end
 
 Players.PlayerAdded:Connect(function(player: Player)
 	loadData(player)
+end)
+
+-- Clients request a full resync once their UI scripts have bound their listeners
+local RequestSync = Remotes:WaitForChild("RequestSync") :: RemoteEvent
+RequestSync.OnServerEvent:Connect(function(player: Player)
+	local d = PlayerData[player.UserId]
+	if not d then
+		return
+	end
+	DataServer.PushHUD(player)
+	UpdateInventory:FireClient(player, d.inventory, d.equipped)
+	UpdateMastery:FireClient(player, d.mastery)
 end)
 
 Players.PlayerRemoving:Connect(function(player: Player)

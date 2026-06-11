@@ -82,3 +82,6 @@ UpdateMastery.OnClientEvent:Connect(function(mastery: unknown)
 end)
 
 panel.Visible = false
+
+local RequestSync = Remotes:WaitForChild("RequestSync") :: RemoteEvent
+RequestSync:FireServer()

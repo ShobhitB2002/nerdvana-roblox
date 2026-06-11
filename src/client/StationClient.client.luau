@@ -62,6 +62,9 @@ local function renderRecipes(_stationKey: string, recipes: { RecipeDB.Recipe })
 			local d = ItemDB.Get(itemId)
 			table.insert(ingList, (if d then d.name else itemId) .. " x" .. tostring(qty))
 		end
+		if recipe.goldCost and recipe.goldCost > 0 then
+			table.insert(ingList, tostring(recipe.goldCost) .. " Gold")
+		end
 		local ingLbl = Instance.new("TextLabel")
 		ingLbl.Size = UDim2.new(1, -5, 0.4, 0)
 		ingLbl.Position = UDim2.new(0, 5, 0.55, 0)

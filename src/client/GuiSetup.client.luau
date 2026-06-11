@@ -132,8 +132,8 @@ do
 		BackgroundTransparency = 0.2,
 		BorderSizePixel = 0,
 	})
-	-- store health fill reference implicitly by name; HUDClient finds it
-	_ = healthFill
+	-- health fill is found by name in HUDClient
+	local _ = healthFill
 end
 
 -- Inventory

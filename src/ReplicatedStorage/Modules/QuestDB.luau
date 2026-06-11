@@ -20,7 +20,7 @@ export type Quest = {
 	nextQuest: string?,
 }
 
-local QuestDB: { Quests: { Quest } } = {} :: any
+local QuestDB = {}
 
 QuestDB.Quests = {
 	{
@@ -44,7 +44,7 @@ QuestDB.Quests = {
 	{
 		id = "q3_craft_axe",
 		title = "The Woodcutter's Edge",
-		description = "Craft a Wooden Axe at the Crafting Bench.",
+		description = "Craft a Wooden Axe at the Crafting Bench (needs 3 Planks — chop more wood if you're short).",
 		npc = "Sawmill Master",
 		objectives = { { type = "craft", recipeId = "craft_axe_t1", qty = 1 } },
 		rewards = { gold = 8, xp = {} },
@@ -62,7 +62,7 @@ QuestDB.Quests = {
 	{
 		id = "q5_tan_hide",
 		title = "Tanner's Craft",
-		description = "Tan your wolf hides into 2 Leather at the Tanning Rack.",
+		description = "Tan your wolf hides into 2 Leather at the Tanning Rack (3 hides per leather).",
 		npc = "Tanner",
 		objectives = { { type = "craft", recipeId = "refine_raw_hide_t1", qty = 2 } },
 		rewards = { gold = 10, xp = {} },
@@ -118,7 +118,7 @@ QuestDB.Quests = {
 		rewards = { gold = 0, xp = {} },
 		nextQuest = nil,
 	},
-}
+} :: { Quest }
 
 function QuestDB.Get(id: string): Quest?
 	for _, q in ipairs(QuestDB.Quests) do

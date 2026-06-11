@@ -30,30 +30,28 @@ local RarityColors: { [string]: Color3 } = {
 	Mythic = Color3.fromRGB(255, 40, 40),
 }
 
-local currentTab = "Materials"
-local currentInventory: { Shared.InventorySlot } = {}
+local currentTab = "All"
+local currentInventory: Shared.CategorizedInventory? = nil
 
 local function flattenCategorizedInventory(categorizedInv: Shared.CategorizedInventory): { Shared.InventorySlot }
 	local flat: { Shared.InventorySlot } = {}
-	
-	-- Add "All Items" category
+
 	if currentTab == "All" then
-		for _, category in pairs(categorizedInv) do
+		for _, category in pairs(categorizedInv :: { [string]: { Shared.InventorySlot } }) do
 			for _, slot in ipairs(category) do
 				table.insert(flat, slot)
 			end
 		end
 		return flat
 	end
-	
-	-- Add specific category
-	local category = categorizedInv[currentTab:lower()]
+
+	local category = (categorizedInv :: { [string]: { Shared.InventorySlot } })[currentTab:lower()]
 	if category then
 		for _, slot in ipairs(category) do
 			table.insert(flat, slot)
 		end
 	end
-	
+
 	return flat
 end
 
@@ -64,9 +62,11 @@ local function renderInventory()
 		end
 	end
 	local y = 0
-	
-	-- Get the appropriate inventory based on current tab
-	local inventoryToRender = flattenCategorizedInventory(currentInventory)
+
+	if not currentInventory then
+		return
+	end
+	local inventoryToRender = flattenCategorizedInventory(currentInventory :: Shared.CategorizedInventory)
 	
 	for _, slot in ipairs(inventoryToRender) do
 		local def = ItemDB.Get(slot.id)
@@ -135,6 +135,20 @@ local function renderInventory()
 			equipBtn.Parent = row
 			equipBtn.MouseButton1Click:Connect(function()
 				GatherResource:FireServer("equip", slot.id)
+			end)
+		elseif def.type == "Consumables" and def.stats and def.stats.healAmount then
+			local useBtn = Instance.new("TextButton")
+			useBtn.Size = UDim2.new(0, 55, 0, 22)
+			useBtn.Position = UDim2.new(1, -120, 0.5, -11)
+			useBtn.Text = "Use"
+			useBtn.Font = Enum.Font.GothamBold
+			useBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+			useBtn.BackgroundColor3 = Color3.fromRGB(60, 100, 160)
+			useBtn.BorderSizePixel = 0
+			useBtn.TextScaled = true
+			useBtn.Parent = row
+			useBtn.MouseButton1Click:Connect(function()
+				GatherResource:FireServer("use", slot.id)
 			end)
 		end
 
@@ -206,20 +220,8 @@ UserInputService.InputBegan:Connect(function(input: InputObject, processed: bool
 end)
 
 UpdateInventory.OnClientEvent:Connect(function(inventory: unknown, _equipped: unknown)
-	print("[InventoryClient] Received inventory update, type:", typeof(inventory))
 	if typeof(inventory) == "table" then
-		-- Handle both old flat inventory and new categorized inventory
-		if #inventory > 0 then
-			-- Old flat inventory format
-			print("[InventoryClient] Using flat inventory format, items:", #inventory)
-			currentInventory = inventory :: { Shared.InventorySlot }
-		else
-			-- New categorized inventory format
-			print("[InventoryClient] Using categorized inventory format")
-			currentInventory = inventory :: Shared.CategorizedInventory
-		end
-	else
-		print("[InventoryClient] Invalid inventory type received:", typeof(inventory))
+		currentInventory = inventory :: Shared.CategorizedInventory
 	end
 	renderInventory()
 end)
@@ -267,3 +269,6 @@ autoArrangeBtn.MouseButton1Click:Connect(function()
 end)
 
 background.Visible = false
+
+local RequestSync = Remotes:WaitForChild("RequestSync") :: RemoteEvent
+RequestSync:FireServer()

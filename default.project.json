@@ -33,12 +33,14 @@
         "UnlockPortal": { "$className": "RemoteEvent" },
         "EnterPortal": { "$className": "RemoteEvent" },
         "QuestUpdate": { "$className": "RemoteEvent" },
-        "GatherFeedback": { "$className": "RemoteEvent" }
+        "GatherFeedback": { "$className": "RemoteEvent" },
+        "RequestSync": { "$className": "RemoteEvent" }
       }
     },
 
     "ServerScriptService": {
       "DataServer": { "$path": "src/server/DataServer.luau" },
+      "QuestServer": { "$path": "src/server/QuestServer.luau" },
       "GameManager": { "$path": "src/server/GameManager.server.luau" },
       "IslandGenerator": { "$path": "src/server/IslandGenerator.server.luau" },
       "MobAI": { "$path": "src/server/MobAI.server.luau" },

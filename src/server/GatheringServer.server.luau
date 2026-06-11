@@ -1,7 +1,6 @@
 --!strict
 -- GatheringServer: Tree gathering via ProximityPrompt
 
-local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 if not RunService:IsServer() then
@@ -10,11 +9,12 @@ end
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataServer = require(script.Parent.DataServer)
+local QuestServer = require(script.Parent.QuestServer)
 local ItemDB = require(ReplicatedStorage.Modules.ItemDB)
+local Shared = require(ReplicatedStorage.Modules.Shared)
 local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
 local UpdateInventory = Remotes:WaitForChild("UpdateInventory") :: RemoteEvent
 local UpdateMastery = Remotes:WaitForChild("UpdateMastery") :: RemoteEvent
-local QuestUpdate = Remotes:WaitForChild("QuestUpdate") :: RemoteEvent
 local GatherFeedback = Remotes:WaitForChild("GatherFeedback") :: RemoteEvent
 
 local Cooldowns: { [string]: boolean } = {}
@@ -26,19 +26,12 @@ local function dropItem(player: Player, itemId: string)
 		return
 	end
 	
-	-- Find the item in inventory
-	local slotToRemove = nil
-	for i, slot in ipairs(data.inventory) do
-		if slot.id == itemId then
-			slotToRemove = slot
-			table.remove(data.inventory, i)
-			break
-		end
-	end
-	
-	if not slotToRemove then
+	-- Find the item in the categorized inventory and remove the whole stack
+	local catName, idx, slotToRemove = Shared.FindInCategorizedInventory(data.inventory, itemId)
+	if not catName or not idx or not slotToRemove then
 		return
 	end
+	table.remove((data.inventory :: any)[catName], idx)
 	
 	-- Create dropped item in world
 	local def = ItemDB.Get(itemId)
@@ -102,18 +95,29 @@ task.spawn(function()
 	end
 end)
 
+-- Which mastery line each resource trains (design doc: Wood/Hide/Ore/Stone)
+local function masteryLineFor(resourceId: string): string
+	if string.find(resourceId, "raw_wood", 1, true) then
+		return "Wood"
+	elseif string.find(resourceId, "raw_hide", 1, true) then
+		return "Hide"
+	elseif string.find(resourceId, "raw_ore", 1, true) then
+		return "Ore"
+	elseif string.find(resourceId, "raw_stone", 1, true) then
+		return "Stone"
+	end
+	return "Wood"
+end
+
 local function onGather(player: Player, trunk: BasePart)
-	print("[GatheringServer] onGather called by:", player.Name)
 	local resourceTag = trunk:FindFirstChild("ResourceType")
 	local xpTag = trunk:FindFirstChild("MasteryXP")
 	if not resourceTag or not resourceTag:IsA("StringValue") then
-		print("[GatheringServer] No ResourceType tag found")
 		return
 	end
 
 	local resourceId = resourceTag.Value
 	local masteryXP = if xpTag and xpTag:IsA("IntValue") then xpTag.Value else 1
-	print("[GatheringServer] Gathering:", resourceId, "XP:", masteryXP)
 
 	local uid = tostring(player.UserId) .. "_" .. trunk:GetFullName()
 	if Cooldowns[uid] then
@@ -134,15 +138,13 @@ local function onGather(player: Player, trunk: BasePart)
 			gatherQty += toolDef.stats.gatherBonus or 0
 			local gsp = toolDef.stats.gatherSpeed or 1.0
 			cooldownTime = cooldownTime / gsp
-			for _, slot in ipairs(data.inventory) do
-				if slot.id == toolId then
-					slot.durability = (slot.durability or 100) - 1
-					if slot.durability <= 0 then
-						data.equipped.tool = nil
-						DataServer.RemoveFromInventory(player, toolId, 1)
-						UpdateInventory:FireClient(player, data.inventory, data.equipped)
-					end
-					break
+			local _, _, slot = Shared.FindInCategorizedInventory(data.inventory, toolId)
+			if slot then
+				slot.durability = (slot.durability or 100) - 1
+				if slot.durability <= 0 then
+					data.equipped.tool = nil
+					DataServer.RemoveFromInventory(player, toolId, 1)
+					UpdateInventory:FireClient(player, data.inventory, data.equipped)
 				end
 			end
 		end
@@ -157,10 +159,10 @@ local function onGather(player: Player, trunk: BasePart)
 		return
 	end
 
-	DataServer.AddMastery(player, "Wood", masteryXP * gatherQty)
+	DataServer.AddMastery(player, masteryLineFor(resourceId), masteryXP * gatherQty)
 	UpdateMastery:FireClient(player, data.mastery)
 	UpdateInventory:FireClient(player, data.inventory, data.equipped)
-	QuestUpdate:FireClient(player, "collect", resourceId, gatherQty)
+	QuestServer.Progress(player, "collect", resourceId, gatherQty)
 
 	local itemDef = ItemDB.Get(resourceId)
 	GatherFeedback:FireClient(player, resourceId, gatherQty, trunk.Position, if itemDef then itemDef.name else resourceId)
@@ -203,7 +205,7 @@ local function onPickup(player: Player, dropPart: BasePart)
 	if data then
 		UpdateInventory:FireClient(player, data.inventory, data.equipped)
 		DataServer.PushHUD(player)
-		QuestUpdate:FireClient(player, "collect", itemId, quantity)
+		QuestServer.Progress(player, "collect", itemId, quantity)
 		
 		-- Show pickup feedback
 		local itemDef = ItemDB.Get(itemId)
@@ -224,9 +226,9 @@ local function hookTreeTrunk(part: Instance)
 		-- Hook up dropped item pickup
 		local itemIdTag = part:FindFirstChild("ItemId")
 		if itemIdTag and itemIdTag:IsA("StringValue") then
-			local prompt = part:FindFirstChildOfClass("ProximityPrompt")
-			if prompt then
-				prompt.Triggered:Connect(function(player: Player)
+			local pickupPrompt = part:FindFirstChildOfClass("ProximityPrompt")
+			if pickupPrompt then
+				pickupPrompt.Triggered:Connect(function(player: Player)
 					onPickup(player, part)
 				end)
 			end
@@ -239,39 +241,29 @@ local function autoStackInventory(player: Player)
 	if not data then
 		return
 	end
-	
-	-- Group items by ID
-	local itemGroups: { [string]: { Shared.InventorySlot } } = {}
-	for _, slot in ipairs(data.inventory) do
-		if not itemGroups[slot.id] then
-			itemGroups[slot.id] = {}
+
+	-- Consolidate duplicate stackable stacks within each category
+	for _, categoryInventory in pairs(data.inventory :: { [string]: { Shared.InventorySlot } }) do
+		local merged: { [string]: Shared.InventorySlot } = {}
+		local newList: { Shared.InventorySlot } = {}
+		for _, slot in ipairs(categoryInventory) do
+			local def = ItemDB.Get(slot.id)
+			if def and def.stackable then
+				local existing = merged[slot.id]
+				if existing then
+					existing.quantity = (existing.quantity or 1) + (slot.quantity or 1)
+				else
+					merged[slot.id] = slot
+					table.insert(newList, slot)
+				end
+			else
+				table.insert(newList, slot)
+			end
 		end
-		table.insert(itemGroups[slot.id], slot)
+		table.clear(categoryInventory)
+		table.move(newList, 1, #newList, 1, categoryInventory)
 	end
-	
-	-- Consolidate stacks
-	local newInventory: { Shared.InventorySlot } = {}
-	for itemId, slots in pairs(itemGroups) do
-		local totalQty = 0
-		for _, slot in ipairs(slots) do
-			totalQty += (slot.quantity or 1)
-		end
-		
-		if totalQty > 1 then
-			-- Create consolidated stack
-			table.insert(newInventory, {
-				id = itemId,
-				quantity = totalQty,
-				durability = slots[1].durability,
-				rarity = slots[1].rarity
-			})
-		else
-			-- Keep single items as-is
-			table.insert(newInventory, slots[1])
-		end
-	end
-	
-	data.inventory = newInventory
+
 	UpdateInventory:FireClient(player, data.inventory, data.equipped)
 	DataServer.PushHUD(player)
 end
@@ -281,29 +273,22 @@ local function autoArrangeInventory(player: Player)
 	if not data then
 		return
 	end
-	
-	-- Sort by item type, then by name, then by tier
-	table.sort(data.inventory, function(a, b)
-		local defA = ItemDB.Get(a.id)
-		local defB = ItemDB.Get(b.id)
-		if not defA or not defB then
-			return false
-		end
-		
-		-- Sort by type first
-		if defA.type ~= defB.type then
-			return defA.type < defB.type
-		end
-		
-		-- Then by name
-		if defA.name ~= defB.name then
+
+	-- Sort each category by tier, then name
+	for _, categoryInventory in pairs(data.inventory :: { [string]: { Shared.InventorySlot } }) do
+		table.sort(categoryInventory, function(a, b)
+			local defA = ItemDB.Get(a.id)
+			local defB = ItemDB.Get(b.id)
+			if not defA or not defB then
+				return false
+			end
+			if (defA.tier or 1) ~= (defB.tier or 1) then
+				return (defA.tier or 1) < (defB.tier or 1)
+			end
 			return defA.name < defB.name
-		end
-		
-		-- Finally by tier
-		return (defA.tier or 1) < (defB.tier or 1)
-	end)
-	
+		end)
+	end
+
 	UpdateInventory:FireClient(player, data.inventory, data.equipped)
 	DataServer.PushHUD(player)
 end
@@ -313,33 +298,31 @@ local function splitItem(player: Player, itemId: string)
 	if not data then
 		return
 	end
-	
-	-- Find the item to split
-	for i, slot in ipairs(data.inventory) do
-		if slot.id == itemId and slot.quantity and slot.quantity > 1 then
-			local halfQty = math.floor(slot.quantity / 2)
-			slot.quantity = slot.quantity - halfQty
-			
-			-- Create new stack with half quantity
-			table.insert(data.inventory, i + 1, {
-				id = itemId,
-				quantity = halfQty,
-				durability = slot.durability,
-				rarity = slot.rarity
-			})
-			
-			UpdateInventory:FireClient(player, data.inventory, data.equipped)
-			DataServer.PushHUD(player)
-			return
-		end
+
+	local catName, idx, slot = Shared.FindInCategorizedInventory(data.inventory, itemId)
+	if not catName or not idx or not slot then
+		return
 	end
+	if not slot.quantity or slot.quantity <= 1 then
+		return
+	end
+
+	local halfQty = math.floor(slot.quantity / 2)
+	slot.quantity -= halfQty
+	table.insert((data.inventory :: any)[catName], idx + 1, {
+		id = itemId,
+		quantity = halfQty,
+		durability = slot.durability,
+		rarity = slot.rarity,
+	})
+
+	UpdateInventory:FireClient(player, data.inventory, data.equipped)
+	DataServer.PushHUD(player)
 end
 
 -- Handle remote events
 local GatherResource = Remotes:WaitForChild("GatherResource") :: RemoteEvent
 GatherResource.OnServerEvent:Connect(function(player: Player, action: string, itemId: string)
-	print("[GatheringServer] Received action:", action, "itemId:", itemId)
-	
 	if action == "drop" then
 		dropItem(player, itemId)
 	elseif action == "autoStack" then
@@ -348,9 +331,8 @@ GatherResource.OnServerEvent:Connect(function(player: Player, action: string, it
 		autoArrangeInventory(player)
 	elseif action == "split" then
 		splitItem(player, itemId)
-	else
-		print("[GatheringServer] Unknown action:", action)
 	end
+	-- "equip" / "use" are handled by CraftingServer on this same remote
 end)
 
 for _, desc in ipairs(workspace:GetDescendants()) do

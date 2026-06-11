@@ -10,6 +10,8 @@ end
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataServer = require(script.Parent.DataServer)
 local ItemDB = require(ReplicatedStorage.Modules.ItemDB)
+local Shared = require(ReplicatedStorage.Modules.Shared)
+local RarityRoller = require(ReplicatedStorage.Modules.RarityRoller)
 local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
 local CombatHit = Remotes:WaitForChild("CombatHit") :: RemoteEvent
 local UpdateInventory = Remotes:WaitForChild("UpdateInventory") :: RemoteEvent
@@ -39,14 +41,15 @@ CombatHit.OnServerEvent:Connect(function(player: Player, mobModel: unknown)
 		if wDef and wDef.stats then
 			damage = wDef.stats.damage or damage
 			attackSpeed = wDef.stats.speed or 1.0
-			for _, slot in ipairs(data.inventory) do
-				if slot.id == weaponId then
-					slot.durability = (slot.durability or 80) - 1
-					if slot.durability <= 0 then
-						data.equipped.weapon = nil
-						DataServer.RemoveFromInventory(player, weaponId, 1)
-					end
-					break
+			local _, _, slot = Shared.FindInCategorizedInventory(data.inventory, weaponId)
+			if slot then
+				-- Rarity quality bonus (Common +0% ... Mythic +20% per design doc)
+				local mult = RarityRoller.Multipliers[slot.rarity or "Common"] or 1.0
+				damage = math.floor(damage * mult)
+				slot.durability = (slot.durability or 80) - 1
+				if slot.durability <= 0 then
+					data.equipped.weapon = nil
+					DataServer.RemoveFromInventory(player, weaponId, 1)
 				end
 			end
 		end

@@ -30,7 +30,7 @@ export type MobDef = {
 	modelColor: Color3,
 }
 
-local MobDB: { Mobs: { [string]: MobDef } } = {} :: any
+local MobDB = {}
 
 MobDB.Mobs = {
 	["Wolf"] = {
@@ -43,7 +43,7 @@ MobDB.Mobs = {
 		attackRange = 5,
 		attackCooldown = 1.5,
 		drops = {
-			{ item = "raw_hide_t1", qty = 1, chance = 1.0 },
+			{ item = "raw_hide_t1", qty = 2, chance = 1.0 },
 			{ item = "wolf_fang", qty = 1, chance = 0.4 },
 		},
 		masteryLine = "Sword",
@@ -196,6 +196,27 @@ MobDB.Mobs = {
 		respawnTime = 240,
 		modelColor = Color3.fromRGB(60, 60, 60),
 	},
+	["BeastBoss"] = {
+		id = "BeastBoss",
+		displayName = "Ancient Gorehorn",
+		health = 500,
+		damage = 25,
+		speed = 13,
+		aggroRange = 35,
+		attackRange = 7,
+		attackCooldown = 1.4,
+		drops = {
+			{ item = "raw_hide_t2", qty = 4, chance = 1.0 },
+			{ item = "leather_t2", qty = 2, chance = 0.7 },
+			{ item = "bear_pelt", qty = 1, chance = 0.5 },
+		},
+		masteryLine = "Sword",
+		masteryXP = 60,
+		goldDrop = { min = 40, max = 80 },
+		isBoss = true,
+		respawnTime = 240,
+		modelColor = Color3.fromRGB(120, 40, 40),
+	},
 	["ForestMiniboss"] = {
 		id = "ForestMiniboss",
 		displayName = "Ancient Treant",
@@ -217,7 +238,7 @@ MobDB.Mobs = {
 		respawnTime = 200,
 		modelColor = Color3.fromRGB(40, 80, 40),
 	},
-}
+} :: { [string]: MobDef }
 
 function MobDB.Get(id: string): MobDef?
 	return MobDB.Mobs[id]

@@ -12,52 +12,88 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local MobDB = require(ReplicatedStorage.Modules.MobDB)
 local DataServer = require(script.Parent.DataServer)
 local BossServer = require(script.Parent.BossServer)
+local QuestServer = require(script.Parent.QuestServer)
 local ItemDB = require(ReplicatedStorage.Modules.ItemDB)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
 local RemotesMobDied = Remotes:WaitForChild("MobDied") :: RemoteEvent
 local RemotesUpdateMastery = Remotes:WaitForChild("UpdateMastery") :: RemoteEvent
-local RemotesQuestUpdate = Remotes:WaitForChild("QuestUpdate") :: RemoteEvent
 local RemotesBossDefeated = Remotes:WaitForChild("BossDefeated") :: RemoteEvent
 
 export type SpawnPoint = {
 	mobId: string,
 	pos: Vector3,
 	count: number,
+	corrupted: boolean?,
 }
 
+-- Safe zones: mobs never aggro or damage players inside these
+local CORRUPT_OFFSET = Vector3.new(3000, 0, 0)
+local SafeZones: { { center: Vector3, radius: number } } = {
+	{ center = Vector3.new(0, 0, 0), radius = 95 }, -- village plaza
+	{ center = CORRUPT_OFFSET, radius = 45 }, -- corrupted return pad
+}
+
+local function inSafeZone(pos: Vector3): boolean
+	for _, z in ipairs(SafeZones) do
+		local d = Vector3.new(pos.X - z.center.X, 0, pos.Z - z.center.Z).Magnitude
+		if d < z.radius then
+			return true
+		end
+	end
+	return false
+end
+
+-- Corrupted variants: tougher, better rewards (New Game+ loop)
+local function resolveDef(mobId: string, corrupted: boolean?): MobDB.MobDef?
+	local def = MobDB.Get(mobId)
+	if not def then
+		return nil
+	end
+	if not corrupted then
+		return def
+	end
+	local c = table.clone(def)
+	c.displayName = "Corrupted " .. def.displayName
+	c.health = math.floor(def.health * 1.75)
+	c.damage = math.floor(def.damage * 1.5)
+	c.masteryXP = def.masteryXP * 2
+	c.goldDrop = { min = def.goldDrop.min * 2, max = def.goldDrop.max * 2 }
+	c.modelColor = Color3.fromRGB(80, 20, 110)
+	return c
+end
+
 local SpawnPoints: { SpawnPoint } = {
-	-- Forest biome (northwest) - Wolves and Bears (scaled for 1024x1024)
-	{ mobId = "Wolf", pos = Vector3.new(-400, 1, -400), count = 8 },
-	{ mobId = "Wolf", pos = Vector3.new(-300, 1, -300), count = 6 },
-	{ mobId = "Bear", pos = Vector3.new(-440, 1, -440), count = 4 },
-	{ mobId = "ForestMiniboss", pos = Vector3.new(-360, 1, -360), count = 1 },
-	
-	-- Mountain biome (northeast) - Elementals and Bandits (scaled for 1024x1024)
-	{ mobId = "Elemental", pos = Vector3.new(400, 1, -400), count = 6 },
-	{ mobId = "Elemental", pos = Vector3.new(440, 1, -440), count = 5 },
-	{ mobId = "Bandit", pos = Vector3.new(360, 1, -360), count = 7 },
-	{ mobId = "MountainMiniboss", pos = Vector3.new(400, 1, -400), count = 1 },
-	
-	-- Plains biome (southwest) - Wolves and Bandits (scaled for 1024x1024)
-	{ mobId = "Wolf", pos = Vector3.new(-400, 1, 400), count = 6 },
-	{ mobId = "Bandit", pos = Vector3.new(-360, 1, 360), count = 5 },
-	{ mobId = "Bandit", pos = Vector3.new(-440, 1, 440), count = 4 },
-	
-	-- Swamp biome (southeast) - Swamp Beasts and Wolves (scaled for 1024x1024)
-	{ mobId = "SwampBeast", pos = Vector3.new(400, 1, 400), count = 7 },
-	{ mobId = "SwampBeast", pos = Vector3.new(360, 1, 360), count = 5 },
-	{ mobId = "Wolf", pos = Vector3.new(440, 1, 440), count = 4 },
-	
-	-- Central area - Mixed encounters (scaled for 1024x1024)
-	{ mobId = "Wolf", pos = Vector3.new(240, 1, 0), count = 4 },
-	{ mobId = "Bandit", pos = Vector3.new(-240, 1, 0), count = 4 },
-	{ mobId = "Elemental", pos = Vector3.new(0, 1, 240), count = 3 },
-	
-	-- Boss encounters (outer edges) (scaled for 1024x1024)
-	{ mobId = "WolfBoss", pos = Vector3.new(700, 1, 200), count = 1 },
-	{ mobId = "BanditCaptain", pos = Vector3.new(-700, 1, -200), count = 1 },
-	{ mobId = "BeastBoss", pos = Vector3.new(0, 1, -900), count = 1 },
+	-- West forest: wolves near the treeline, alpha deep in the woods
+	{ mobId = "Wolf", pos = Vector3.new(-190, 3, -60), count = 5 },
+	{ mobId = "Wolf", pos = Vector3.new(-240, 3, 90), count = 5 },
+	{ mobId = "Bear", pos = Vector3.new(-330, 3, -120), count = 3 },
+	{ mobId = "WolfBoss", pos = Vector3.new(-380, 3, 20), count = 1 },
+	{ mobId = "ForestMiniboss", pos = Vector3.new(-340, 3, 160), count = 1 },
+
+	-- East rocks: elementals guard the ore fields
+	{ mobId = "Elemental", pos = Vector3.new(220, 3, -60), count = 4 },
+	{ mobId = "Elemental", pos = Vector3.new(290, 3, 90), count = 3 },
+	{ mobId = "MountainMiniboss", pos = Vector3.new(380, 3, 0), count = 1 },
+
+	-- South plains: bandit camp + captain arena
+	{ mobId = "Bandit", pos = Vector3.new(120, 3, 220), count = 4 },
+	{ mobId = "Bandit", pos = Vector3.new(-110, 3, 250), count = 4 },
+	{ mobId = "BanditCaptain", pos = Vector3.new(0, 3, 330), count = 1 },
+	{ mobId = "SwampBeast", pos = Vector3.new(280, 3, 300), count = 4 },
+
+	-- North: beast boss arena guards the portal
+	{ mobId = "Wolf", pos = Vector3.new(-90, 3, -200), count = 3 },
+	{ mobId = "BeastBoss", pos = Vector3.new(0, 3, -230), count = 1 },
+
+	-- Corrupted island (NG+): harder versions, double rewards
+	{ mobId = "Wolf", pos = CORRUPT_OFFSET + Vector3.new(-120, 3, -80), count = 5, corrupted = true },
+	{ mobId = "Bandit", pos = CORRUPT_OFFSET + Vector3.new(110, 3, 130), count = 5, corrupted = true },
+	{ mobId = "Bear", pos = CORRUPT_OFFSET + Vector3.new(-140, 3, 120), count = 3, corrupted = true },
+	{ mobId = "Elemental", pos = CORRUPT_OFFSET + Vector3.new(150, 3, -110), count = 3, corrupted = true },
+	{ mobId = "WolfBoss", pos = CORRUPT_OFFSET + Vector3.new(0, 3, -180), count = 1, corrupted = true },
+	{ mobId = "BanditCaptain", pos = CORRUPT_OFFSET + Vector3.new(0, 3, 190), count = 1, corrupted = true },
+	{ mobId = "BeastBoss", pos = CORRUPT_OFFSET + Vector3.new(180, 3, 0), count = 1, corrupted = true },
 }
 
 local function getMobsFolder(): Folder
@@ -71,12 +107,7 @@ local function getMobsFolder(): Folder
 	return nf
 end
 
-local function makeMobModel(mobId: string, position: Vector3): Model?
-	local def = MobDB.Get(mobId)
-	if not def then
-		return nil
-	end
-
+local function makeMobModel(mobId: string, def: MobDB.MobDef, position: Vector3): Model?
 	local model = Instance.new("Model")
 	model.Name = mobId
 
@@ -213,7 +244,7 @@ local function onMobDeath(
 			DataServer.AddMastery(nearestPlayer, def.masteryLine, def.masteryXP)
 			RemotesUpdateMastery:FireClient(nearestPlayer, data.mastery)
 			RemotesMobDied:FireClient(nearestPlayer, mobId, goldAmt)
-			RemotesQuestUpdate:FireClient(nearestPlayer, "kill", mobId, 1)
+			QuestServer.Progress(nearestPlayer, "kill", mobId, 1)
 
 			if def.isBoss then
 				RemotesBossDefeated:FireClient(nearestPlayer, mobId)
@@ -230,10 +261,10 @@ local function onMobDeath(
 
 	task.delay(def.respawnTime, function()
 		local offset = Vector3.new(math.random(-10, 10), 0, math.random(-10, 10))
-		local newModel = makeMobModel(mobId, spawnPoint.pos + offset)
-		if newModel then
-			local def2 = MobDB.Get(mobId)
-			if def2 then
+		local def2 = resolveDef(mobId, spawnPoint.corrupted)
+		if def2 then
+			local newModel = makeMobModel(mobId, def2, spawnPoint.pos + offset)
+			if newModel then
 				_setup(newModel, mobId, def2, spawnPoint)
 			end
 		end
@@ -286,7 +317,7 @@ local function setupMobBehavior(model: Model, mobId: string, def: MobDB.MobDef, 
 		local nearestDist = def.aggroRange
 		for _, player in ipairs(Players:GetPlayers()) do
 			local char = player.Character
-			if char and char.PrimaryPart then
+			if char and char.PrimaryPart and not inSafeZone(char.PrimaryPart.Position) then
 				local dist = (char.PrimaryPart.Position - root.Position).Magnitude
 				if dist < nearestDist then
 					nearestDist = dist
@@ -342,11 +373,11 @@ local function setupMobBehavior(model: Model, mobId: string, def: MobDB.MobDef, 
 end
 
 for _, sp in ipairs(SpawnPoints) do
-	local def = MobDB.Get(sp.mobId)
+	local def = resolveDef(sp.mobId, sp.corrupted)
 	if def then
 		for _j = 1, sp.count do
 			local offset = Vector3.new(math.random(-12, 12), 0, math.random(-12, 12))
-			local model = makeMobModel(sp.mobId, sp.pos + offset)
+			local model = makeMobModel(sp.mobId, def, sp.pos + offset)
 			if model then
 				setupMobBehavior(model, sp.mobId, def, sp)
 			end

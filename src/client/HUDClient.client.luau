@@ -58,3 +58,6 @@ UpdateHUD.OnClientEvent:Connect(function(payload: unknown)
 	weightFill.Size = UDim2.new(r, 0, 1, 0)
 	weightLabel.Text = string.format("%.1f/%.0f kg", p.weight, p.maxWeight)
 end)
+
+local RequestSync = Remotes:WaitForChild("RequestSync") :: RemoteEvent
+RequestSync:FireServer()

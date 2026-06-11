@@ -10,9 +10,10 @@ export type Recipe = {
 	outputQty: number,
 	masteryLine: string,
 	masteryXP: number,
+	goldCost: number?,
 }
 
-local RecipeDB: { Recipes: { Recipe } } = {} :: any
+local RecipeDB = {}
 
 RecipeDB.Recipes = {
 	{
@@ -39,7 +40,7 @@ RecipeDB.Recipes = {
 	{
 		id = "refine_raw_hide_t1",
 		station = "tanning_rack",
-		inputs = { raw_hide_t1 = 4 },
+		inputs = { raw_hide_t1 = 3 },
 		previousTier = nil,
 		output = "leather_t1",
 		outputQty = 1,
@@ -76,6 +77,7 @@ RecipeDB.Recipes = {
 		outputQty = 1,
 		masteryLine = "Tool",
 		masteryXP = 10,
+		goldCost = 8,
 	},
 
 	{
@@ -97,12 +99,13 @@ RecipeDB.Recipes = {
 		outputQty = 1,
 		masteryLine = "Sword",
 		masteryXP = 12,
+		goldCost = 10,
 	},
 
 	{
 		id = "craft_helmet_t1",
 		station = "tanning_rack",
-		inputs = { leather_t1 = 3 },
+		inputs = { leather_t1 = 2 },
 		previousTier = nil,
 		output = "helmet_t1",
 		outputQty = 1,
@@ -112,7 +115,7 @@ RecipeDB.Recipes = {
 	{
 		id = "craft_chest_t1",
 		station = "tanning_rack",
-		inputs = { leather_t1 = 6 },
+		inputs = { leather_t1 = 4 },
 		previousTier = nil,
 		output = "chest_t1",
 		outputQty = 1,
@@ -122,7 +125,7 @@ RecipeDB.Recipes = {
 	{
 		id = "craft_boots_t1",
 		station = "tanning_rack",
-		inputs = { leather_t1 = 3 },
+		inputs = { leather_t1 = 2 },
 		previousTier = nil,
 		output = "boots_t1",
 		outputQty = 1,
@@ -132,7 +135,7 @@ RecipeDB.Recipes = {
 	{
 		id = "craft_bag_t1",
 		station = "tanning_rack",
-		inputs = { leather_t1 = 4 },
+		inputs = { leather_t1 = 3 },
 		previousTier = nil,
 		output = "bag_t1",
 		outputQty = 1,
@@ -148,6 +151,7 @@ RecipeDB.Recipes = {
 		outputQty = 1,
 		masteryLine = "Leather",
 		masteryXP = 10,
+		goldCost = 8,
 	},
 	{
 		id = "craft_chest_t2",
@@ -158,6 +162,7 @@ RecipeDB.Recipes = {
 		outputQty = 1,
 		masteryLine = "Leather",
 		masteryXP = 14,
+		goldCost = 12,
 	},
 	{
 		id = "refine_raw_ore_t1",
@@ -239,6 +244,7 @@ RecipeDB.Recipes = {
 		outputQty = 1,
 		masteryLine = "Tool",
 		masteryXP = 12,
+		goldCost = 8,
 	},
 	{
 		id = "craft_knife_t1",
@@ -341,6 +347,7 @@ RecipeDB.Recipes = {
 		outputQty = 1,
 		masteryLine = "Blacksmithing",
 		masteryXP = 20,
+		goldCost = 30,
 	},
 
 	{
@@ -383,6 +390,7 @@ RecipeDB.Recipes = {
 		outputQty = 1,
 		masteryLine = "Leather",
 		masteryXP = 12,
+		goldCost = 10,
 	},
 
 	{
@@ -416,7 +424,19 @@ RecipeDB.Recipes = {
 		masteryLine = "Tool",
 		masteryXP = 1,
 	},
-}
+
+	{
+		id = "buy_bread",
+		station = "merchant",
+		inputs = {},
+		previousTier = nil,
+		output = "bread",
+		outputQty = 1,
+		masteryLine = "Refining",
+		masteryXP = 0,
+		goldCost = 5,
+	},
+} :: { Recipe }
 
 function RecipeDB.GetByStation(station: string): { Recipe }
 	local results: { Recipe } = {}

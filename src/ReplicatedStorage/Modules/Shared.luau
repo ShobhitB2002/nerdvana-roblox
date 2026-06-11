@@ -37,17 +37,17 @@ function Shared.AddToInventory(inventory: { InventorySlot }, itemId: string, qty
 	if not def then
 		return false
 	end
-	qty = qty or 1
+	local amount = qty or 1
 	if def.stackable then
-		local idx, slot = Shared.FindInInventory(inventory, itemId)
+		local _idx, slot = Shared.FindInInventory(inventory, itemId)
 		if slot then
-			slot.quantity = (slot.quantity or 1) + qty
+			slot.quantity = (slot.quantity or 1) + amount
 			return true
 		end
 	end
 	local newSlot: InventorySlot = {
 		id = itemId,
-		quantity = qty,
+		quantity = amount,
 		durability = def.durabilityMax,
 		rarity = rarity or "Common",
 		quality = quality or 1.0,
@@ -57,16 +57,17 @@ function Shared.AddToInventory(inventory: { InventorySlot }, itemId: string, qty
 end
 
 function Shared.RemoveFromInventory(inventory: { InventorySlot }, itemId: string, qty: number?): boolean
-	qty = qty or 1
+	local amount = qty or 1
 	local idx, slot = Shared.FindInInventory(inventory, itemId)
 	if not slot then
 		return false
 	end
-	if (slot.quantity or 1) < qty then
+	if (slot.quantity or 1) < amount then
 		return false
 	end
-	slot.quantity = (slot.quantity or 1) - qty
-	if slot.quantity <= 0 then
+	local remaining = (slot.quantity or 1) - amount
+	slot.quantity = remaining
+	if remaining <= 0 then
 		table.remove(inventory, idx :: number)
 	end
 	return true
@@ -140,20 +141,20 @@ function Shared.AddToCategorizedInventory(inventory: CategorizedInventory, itemI
 		return false
 	end
 	
-	qty = qty or 1
+	local amount = qty or 1
 	local categoryInventory = inventory[category] :: { InventorySlot }
-	
+
 	if def.stackable then
-		local idx, slot = Shared.FindInInventory(categoryInventory, itemId)
+		local _idx, slot = Shared.FindInInventory(categoryInventory, itemId)
 		if slot then
-			slot.quantity = (slot.quantity or 1) + qty
+			slot.quantity = (slot.quantity or 1) + amount
 			return true
 		end
 	end
-	
+
 	local newSlot: InventorySlot = {
 		id = itemId,
-		quantity = qty,
+		quantity = amount,
 		durability = def.durabilityMax,
 		rarity = rarity or "Common",
 		quality = quality or 1.0,
@@ -168,38 +169,76 @@ function Shared.RemoveFromCategorizedInventory(inventory: CategorizedInventory, 
 		return false
 	end
 	
-	qty = qty or 1
+	local amount = qty or 1
 	local categoryInventory = inventory[category] :: { InventorySlot }
 	local idx, slot = Shared.FindInInventory(categoryInventory, itemId)
 	if not slot then
 		return false
 	end
-	
-	if (slot.quantity or 1) < qty then
+
+	if (slot.quantity or 1) < amount then
 		return false
 	end
-	
-	slot.quantity = (slot.quantity or 1) - qty
-	if slot.quantity <= 0 then
+
+	local remaining = (slot.quantity or 1) - amount
+	slot.quantity = remaining
+	if remaining <= 0 then
 		table.remove(categoryInventory, idx :: number)
 	end
-	
+
 	return true
 end
 
 function Shared.FindInCategorizedInventory(inventory: CategorizedInventory, itemId: string): (string?, number?, InventorySlot?)
 	local category = Shared.GetCategory(itemId)
-	if not category then
-		return nil, nil, nil
+	if category then
+		local categoryInventory = inventory[category] :: { InventorySlot }
+		local idx, slot = Shared.FindInInventory(categoryInventory, itemId)
+		if slot then
+			return category, idx, slot
+		end
 	end
-	
-	local categoryInventory = inventory[category] :: { InventorySlot }
-	local idx, slot = Shared.FindInInventory(categoryInventory, itemId)
-	if slot then
-		return category, idx, slot
+
+	-- Fallback: scan every category (handles items saved under an old category)
+	for catName, categoryInventory in pairs(inventory :: { [string]: { InventorySlot } }) do
+		local idx, slot = Shared.FindInInventory(categoryInventory, itemId)
+		if slot then
+			return catName, idx, slot
+		end
 	end
-	
+
 	return nil, nil, nil
+end
+
+function Shared.HasItemsCategorized(inventory: CategorizedInventory, requirements: { [string]: number }): (boolean, string?)
+	for itemId, reqQty in pairs(requirements) do
+		local _, _, slot = Shared.FindInCategorizedInventory(inventory, itemId)
+		if not slot or (slot.quantity or 1) < reqQty then
+			return false, itemId
+		end
+	end
+	return true, nil
+end
+
+function Shared.RandomDropCategorized(inventory: CategorizedInventory): InventorySlot?
+	local candidates: { { cat: { InventorySlot }, idx: number } } = {}
+	for catName, categoryInventory in pairs(inventory :: { [string]: { InventorySlot } }) do
+		if catName ~= "quest" and catName ~= "currency" then
+			for i, slot in ipairs(categoryInventory) do
+				local def = ItemDB.Get(slot.id)
+				if def and def.type ~= "Quest" and def.type ~= "Currency" then
+					table.insert(candidates, { cat = categoryInventory, idx = i })
+				end
+			end
+		end
+	end
+	if #candidates == 0 then
+		return nil
+	end
+	local pick = candidates[math.random(1, #candidates)]
+	local dropped = pick.cat[pick.idx]
+	table.remove(pick.cat, pick.idx)
+	return dropped
 end
 
 function Shared.CalculateCategorizedWeight(inventory: CategorizedInventory): number
