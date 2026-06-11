@@ -40,6 +40,38 @@ local function textButton(props: { [string]: any }): TextButton
 	return b
 end
 
+-- Invisible full-screen button: clicking outside a window closes it
+local function backdrop(parent: ScreenGui): TextButton
+	return textButton({
+		Name = "Backdrop",
+		Parent = parent,
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 0.5,
+		BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+		Text = "",
+		Visible = false,
+		ZIndex = 0,
+		BorderSizePixel = 0,
+	})
+end
+
+-- Red X pinned to a window's top-right corner
+local function closeX(parent: GuiObject): TextButton
+	return textButton({
+		Name = "CloseButton",
+		Parent = parent,
+		Position = UDim2.new(1, -32, 0, 4),
+		Size = UDim2.new(0, 28, 0, 28),
+		Text = "X",
+		Font = Enum.Font.GothamBold,
+		TextScaled = true,
+		BackgroundColor3 = Color3.fromRGB(180, 40, 40),
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		BorderSizePixel = 0,
+		ZIndex = 5,
+	})
+end
+
 -- HUD
 do
 	local hud = screenGui("HUD", 0)
@@ -139,6 +171,7 @@ end
 -- Inventory
 do
 	local inv = screenGui("InventoryGui", 25)
+	backdrop(inv)
 	local bg = frame({
 		Name = "Background",
 		Parent = inv,
@@ -181,6 +214,7 @@ do
 			BorderSizePixel = 0,
 		})
 	end
+	closeX(bg)
 	local list = Instance.new("ScrollingFrame")
 	list.Name = "ItemList"
 	list.Parent = bg
@@ -261,6 +295,7 @@ end
 -- Station
 do
 	local sg = screenGui("StationGui", 35)
+	backdrop(sg)
 	local stationFrame = frame({
 		Name = "StationFrame",
 		Parent = sg,
@@ -311,22 +346,13 @@ do
 		TextScaled = true,
 		TextColor3 = Color3.fromRGB(255, 255, 255),
 	})
-	textButton({
-		Name = "CloseButton",
-		Parent = sg,
-		Position = UDim2.new(1, -35, 0, 5),
-		Size = UDim2.new(0, 30, 0, 30),
-		Text = "X",
-		Font = Enum.Font.GothamBold,
-		BackgroundColor3 = Color3.fromRGB(180, 40, 40),
-		TextColor3 = Color3.fromRGB(255, 255, 255),
-		BorderSizePixel = 0,
-	})
+	closeX(stationFrame)
 end
 
 -- Dialogue
 do
 	local dg = screenGui("DialogueGui", 40)
+	backdrop(dg)
 	local box = frame({
 		Name = "DialogueBox",
 		Parent = dg,
@@ -368,17 +394,7 @@ do
 	opt.BackgroundTransparency = 1
 	opt.ScrollBarThickness = 4
 	opt.BorderSizePixel = 0
-	textButton({
-		Name = "CloseButton",
-		Parent = dg,
-		Position = UDim2.new(1, -35, 0, 5),
-		Size = UDim2.new(0, 30, 0, 30),
-		Text = "X",
-		Font = Enum.Font.GothamBold,
-		BackgroundColor3 = Color3.fromRGB(180, 40, 40),
-		TextColor3 = Color3.fromRGB(255, 255, 255),
-		BorderSizePixel = 0,
-	})
+	closeX(box)
 end
 
 -- Notification

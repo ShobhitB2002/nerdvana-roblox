@@ -68,6 +68,27 @@ local function checkCompletion(player: Player)
 	QuestServer.PushState(player, quest.id)
 end
 
+-- Admin: instantly complete the active quest
+function QuestServer.ForceComplete(player: Player)
+	local data = DataServer.Get(player)
+	if not data then
+		return
+	end
+	local quest = QuestDB.Get(data.quests.active)
+	if not quest then
+		return
+	end
+	local prog = Progress[player.UserId]
+	if not prog then
+		prog = {}
+		Progress[player.UserId] = prog
+	end
+	for _, obj in ipairs(quest.objectives) do
+		prog[objectiveKey(obj)] = obj.qty or 1
+	end
+	checkCompletion(player)
+end
+
 function QuestServer.Progress(player: Player, actionType: string, key: string, qty: number?)
 	local data = DataServer.Get(player)
 	if not data then

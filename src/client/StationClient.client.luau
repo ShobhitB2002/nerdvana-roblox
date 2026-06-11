@@ -18,7 +18,13 @@ local stationFrame = stationGui:WaitForChild("StationFrame") :: Frame
 local recipeList = stationFrame:WaitForChild("RecipeList") :: ScrollingFrame
 local craftBtn = stationFrame:WaitForChild("CraftButton") :: TextButton
 local resultLabel = stationFrame:WaitForChild("ResultLabel") :: TextLabel
-local closeBtn = stationGui:WaitForChild("CloseButton") :: TextButton
+local closeBtn = stationFrame:WaitForChild("CloseButton") :: TextButton
+local backdropBtn = stationGui:WaitForChild("Backdrop") :: TextButton
+
+local function setOpen(open: boolean)
+	stationFrame.Visible = open
+	backdropBtn.Visible = open
+end
 
 local selectedRecipeId: string? = nil
 
@@ -91,7 +97,7 @@ local function renderRecipes(_stationKey: string, recipes: { RecipeDB.Recipe })
 		y += 65
 	end
 	recipeList.CanvasSize = UDim2.new(0, 0, 0, y)
-	stationFrame.Visible = true
+	setOpen(true)
 end
 
 OpenStation.OnClientEvent:Connect(function(stationKey: unknown, recipes: unknown)
@@ -133,7 +139,10 @@ CraftItem.OnClientEvent:Connect(function(success: unknown, outputOrError: unknow
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
-	stationFrame.Visible = false
+	setOpen(false)
+end)
+backdropBtn.MouseButton1Click:Connect(function()
+	setOpen(false)
 end)
 
-stationFrame.Visible = false
+setOpen(false)

@@ -146,6 +146,40 @@ local function makeBuilding(name: string, pos: Vector3, size: Vector3, roofColor
 	roof.Anchored = true
 	roof.Material = Enum.Material.SmoothPlastic
 	roof.Parent = folder
+
+	-- Door + windows on the wall facing the village center
+	local toCenter = -pos
+	local facingX = math.abs(toCenter.X) > math.abs(toCenter.Z)
+	local sx = if facingX then math.sign(toCenter.X) else 0
+	local sz = if facingX then 0 else math.sign(toCenter.Z)
+	local wallHalf = if facingX then size.X / 2 else size.Z / 2
+
+	local doorSize = if facingX then Vector3.new(0.3, 4.5, 2.6) else Vector3.new(2.6, 4.5, 0.3)
+	local door = makePart("Door", doorSize, pos + Vector3.new(sx * (wallHalf + 0.2), 2.85, sz * (wallHalf + 0.2)), "Brown", folder)
+	door.Material = Enum.Material.Wood
+
+	local winSize = if facingX then Vector3.new(0.3, 1.8, 2) else Vector3.new(2, 1.8, 0.3)
+	local sideOffset = if facingX then Vector3.new(0, 0, size.Z / 2 - 2.4) else Vector3.new(size.X / 2 - 2.4, 0, 0)
+	for _, side in ipairs({ -1, 1 }) do
+		local win = makePart(
+			"Window",
+			winSize,
+			pos + Vector3.new(sx * (wallHalf + 0.2), 4.4, sz * (wallHalf + 0.2)) + sideOffset * side,
+			"Pastel light blue",
+			folder
+		)
+		win.Material = Enum.Material.Glass
+		win.Transparency = 0.3
+	end
+
+	local chimney = makePart(
+		"Chimney",
+		Vector3.new(1.5, 3.5, 1.5),
+		pos + Vector3.new(size.X / 2 - 1.5, size.Y + 1.8, -size.Z / 2 + 1.5),
+		"Medium stone grey",
+		folder
+	)
+	chimney.Material = Enum.Material.Brick
 end
 
 makeBuilding("Guide_House", Vector3.new(-55, 0, -28), Vector3.new(14, 9, 14), "Bright blue", "White")
@@ -187,6 +221,19 @@ local function buildStation(sd: StationDef, parent: Folder, posOverride: Vector3
 	else
 		makeLabel(sp, sd.label)
 	end
+
+	-- Per-station accents so each reads at a glance
+	if sd.name == "Forge" or sd.name == "Smeltery" then
+		local ember = makePart(sd.name .. "_Ember", Vector3.new(2.5, 0.6, 2.5), pos + Vector3.new(0, sd.size.Y + 0.9, 0), "Neon orange", parent)
+		ember.Material = Enum.Material.Neon
+	elseif sd.name == "Sawmill" then
+		local blade = makePart(sd.name .. "_Blade", Vector3.new(0.4, 3.2, 3.2), pos + Vector3.new(0, sd.size.Y + 1.6, 0), "Medium stone grey", parent)
+		blade.Shape = Enum.PartType.Cylinder
+		blade.Material = Enum.Material.Metal
+	elseif sd.name == "TanningRack" then
+		local hide = makePart(sd.name .. "_Hide", Vector3.new(3, 2.4, 0.3), pos + Vector3.new(0, sd.size.Y + 1.4, 0), "Nougat", parent)
+		hide.Material = Enum.Material.Fabric
+	end
 end
 
 for _, sd in ipairs(stationDefs) do
@@ -205,21 +252,58 @@ local npcDefs: { NPCDef } = {
 	{ name = "PortalKeeper", pos = Vector3.new(8, 1, -150), color = "Medium lilac" },
 }
 
+local SKIN = Color3.fromRGB(230, 190, 150)
+
 for _, nd in ipairs(npcDefs) do
-	local body = makePart(nd.name .. "_Body", Vector3.new(2.2, 3.2, 2.2), nd.pos + Vector3.new(0, 1.6, 0), nd.color, NPCs)
-	body.Material = Enum.Material.SmoothPlastic
-	local head = makePart(nd.name .. "_Head", Vector3.new(2.2, 2.2, 2.2), nd.pos + Vector3.new(0, 4.2, 0), nd.color, NPCs)
-	head.Shape = Enum.PartType.Ball
+	-- Each NPC is a simple anchored figure facing the village center
+	local groundPos = Vector3.new(nd.pos.X, 0.6, nd.pos.Z)
+	local look = Vector3.new(-nd.pos.X, 0, -nd.pos.Z)
+	if look.Magnitude < 1 then
+		look = Vector3.new(0, 0, 1)
+	end
+	local base = CFrame.lookAt(groundPos, groundPos + look.Unit)
+
+	local function npcPart(name: string, size: Vector3, offset: Vector3, color: Color3?): Part
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Size = size
+		p.CFrame = base * CFrame.new(offset)
+		p.Anchored = true
+		p.Material = Enum.Material.SmoothPlastic
+		p.TopSurface = Enum.SurfaceType.Smooth
+		p.BottomSurface = Enum.SurfaceType.Smooth
+		if color then
+			p.Color = color
+		else
+			p.BrickColor = BrickColor.new(nd.color :: any)
+		end
+		p.Parent = NPCs
+		return p
+	end
+
+	npcPart(nd.name .. "_LegL", Vector3.new(0.9, 1.4, 0.9), Vector3.new(-0.55, 0.7, 0), Color3.fromRGB(70, 70, 80))
+	npcPart(nd.name .. "_LegR", Vector3.new(0.9, 1.4, 0.9), Vector3.new(0.55, 0.7, 0), Color3.fromRGB(70, 70, 80))
+	local torso = npcPart(nd.name .. "_Body", Vector3.new(2.2, 2, 1.2), Vector3.new(0, 2.4, 0))
+	npcPart(nd.name .. "_ArmL", Vector3.new(0.7, 1.9, 0.7), Vector3.new(-1.45, 2.45, 0), SKIN)
+	npcPart(nd.name .. "_ArmR", Vector3.new(0.7, 1.9, 0.7), Vector3.new(1.45, 2.45, 0), SKIN)
+	local head = npcPart(nd.name .. "_Head", Vector3.new(1.5, 1.5, 1.5), Vector3.new(0, 4.15, 0), SKIN)
+	local face = Instance.new("Decal")
+	face.Texture = "rbxasset://textures/face.png"
+	face.Face = Enum.NormalId.Front
+	face.Parent = head
+	npcPart(nd.name .. "_HatBrim", Vector3.new(1.9, 0.2, 1.9), Vector3.new(0, 5, 0))
+	npcPart(nd.name .. "_HatTop", Vector3.new(1.2, 0.7, 1.2), Vector3.new(0, 5.45, 0))
+
 	makeBillboard(head, nd.name, Color3.fromRGB(255, 230, 100))
 	local tag = Instance.new("StringValue")
 	tag.Name = "NPCId"
 	tag.Value = nd.name
-	tag.Parent = body
+	tag.Parent = torso
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ActionText = "Talk to " .. nd.name
 	prompt.KeyboardKeyCode = Enum.KeyCode.F
 	prompt.MaxActivationDistance = 12
-	prompt.Parent = body
+	prompt.Parent = torso
 end
 
 -- Faction lore statues (Humans / Angels / Demons foreshadowing)
@@ -371,6 +455,29 @@ local function buildPortal(parent: Folder, basePos: Vector3, innerName: string, 
 	prompt.Enabled = true
 	prompt.Parent = inner
 	makeLabel(frame, labelText)
+
+	-- Swirling purple sparkles
+	local att = Instance.new("Attachment")
+	att.Parent = inner
+	local pe = Instance.new("ParticleEmitter")
+	pe.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	pe.Rate = 14
+	pe.Lifetime = NumberRange.new(1, 2)
+	pe.Speed = NumberRange.new(2, 5)
+	pe.SpreadAngle = Vector2.new(180, 180)
+	pe.LightEmission = 0.8
+	pe.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1.2),
+		NumberSequenceKeypoint.new(1, 0.2),
+	})
+	pe.Color = ColorSequence.new(Color3.fromRGB(180, 80, 255), Color3.fromRGB(90, 20, 140))
+	pe.Parent = att
+
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(170, 70, 255)
+	light.Range = 24
+	light.Brightness = 1.5
+	light.Parent = inner
 end
 
 buildPortal(Portals, Vector3.new(0, 0, -300), "CorruptedPortal_Inner", "Corrupted Portal\nBeast Seal required", "Enter Corrupted Portal")

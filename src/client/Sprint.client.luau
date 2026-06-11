@@ -1,15 +1,18 @@
 --!strict
--- Hold LeftShift to sprint
+-- Hold LeftShift to sprint. Base speed can be overridden by the admin panel (AdminSpeed attribute).
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
-local WALK = 16
-local SPRINT = 26
 
 local sprinting = false
 
-local function setSprint(on: boolean)
+local function baseSpeed(): number
+	local s = player:GetAttribute("AdminSpeed")
+	return if typeof(s) == "number" then s else 16
+end
+
+local function applySpeed()
 	local char = player.Character
 	if not char then
 		return
@@ -18,8 +21,8 @@ local function setSprint(on: boolean)
 	if not hum then
 		return
 	end
-	sprinting = on
-	hum.WalkSpeed = if on then SPRINT else WALK
+	local base = baseSpeed()
+	hum.WalkSpeed = if sprinting then base * 1.6 else base
 end
 
 UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
@@ -27,19 +30,21 @@ UserInputService.InputBegan:Connect(function(input: InputObject, processed: bool
 		return
 	end
 	if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
-		setSprint(true)
+		sprinting = true
+		applySpeed()
 	end
 end)
 
-UserInputService.InputEnded:Connect(function(input: InputObject, processed: boolean)
+UserInputService.InputEnded:Connect(function(input: InputObject, _processed: boolean)
 	if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
-		setSprint(false)
+		sprinting = false
+		applySpeed()
 	end
 end)
+
+player:GetAttributeChangedSignal("AdminSpeed"):Connect(applySpeed)
 
 player.CharacterAdded:Connect(function(char: Model)
-	local hum = char:WaitForChild("Humanoid") :: Humanoid
-	hum.WalkSpeed = if sprinting then SPRINT else WALK
+	char:WaitForChild("Humanoid")
+	applySpeed()
 end)
-
--- Gamepad B / ButtonL2 style sprint optional — keep keyboard only for simplicity

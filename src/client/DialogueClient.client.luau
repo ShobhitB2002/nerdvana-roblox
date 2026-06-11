@@ -16,7 +16,13 @@ local dialogueBox = dialogueGui:WaitForChild("DialogueBox") :: Frame
 local npcNameLabel = dialogueBox:WaitForChild("NPCNameLabel") :: TextLabel
 local dialogueText = dialogueBox:WaitForChild("DialogueText") :: TextLabel
 local optionsFrame = dialogueBox:WaitForChild("OptionsFrame") :: ScrollingFrame
-local closeBtn = dialogueGui:WaitForChild("CloseButton") :: TextButton
+local closeBtn = dialogueBox:WaitForChild("CloseButton") :: TextButton
+local backdropBtn = dialogueGui:WaitForChild("Backdrop") :: TextButton
+
+local function setOpen(open: boolean)
+	dialogueBox.Visible = open
+	backdropBtn.Visible = open
+end
 
 type Dlg = {
 	greeting: string,
@@ -95,11 +101,14 @@ DialogueEvent.OnClientEvent:Connect(function(npcId: unknown)
 	end
 	optionsFrame.CanvasSize = UDim2.new(0, 0, 0, y)
 
-	dialogueBox.Visible = true
+	setOpen(true)
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
-	dialogueBox.Visible = false
+	setOpen(false)
+end)
+backdropBtn.MouseButton1Click:Connect(function()
+	setOpen(false)
 end)
 
-dialogueBox.Visible = false
+setOpen(false)

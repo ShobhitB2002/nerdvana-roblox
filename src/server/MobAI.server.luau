@@ -13,6 +13,7 @@ local MobDB = require(ReplicatedStorage.Modules.MobDB)
 local DataServer = require(script.Parent.DataServer)
 local BossServer = require(script.Parent.BossServer)
 local QuestServer = require(script.Parent.QuestServer)
+local AdminServer = require(script.Parent.AdminServer)
 local ItemDB = require(ReplicatedStorage.Modules.ItemDB)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
@@ -107,6 +108,103 @@ local function getMobsFolder(): Folder
 	return nf
 end
 
+local FACE_TEXTURE = "rbxasset://textures/face.png"
+
+-- Visual archetype per mob family
+local Archetypes: { [string]: string } = {
+	Wolf = "quadruped",
+	WolfBoss = "quadruped",
+	Bear = "quadruped",
+	SwampBeast = "quadruped",
+	BeastBoss = "quadruped",
+	Bandit = "humanoid",
+	BanditCaptain = "humanoid",
+	Elemental = "golem",
+	MountainMiniboss = "golem",
+	ForestMiniboss = "treant",
+}
+
+local function deco(model: Model, root: BasePart, name: string, size: Vector3, offset: CFrame, color: Color3, shape: Enum.PartType?): Part
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = size
+	p.CFrame = root.CFrame * offset
+	p.Color = color
+	p.Anchored = false
+	p.CanCollide = false
+	p.Massless = true
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	if shape then
+		p.Shape = shape
+	end
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = root
+	weld.Part1 = p
+	weld.Parent = p
+	p.Parent = model
+	return p
+end
+
+local function addFace(head: BasePart)
+	local face = Instance.new("Decal")
+	face.Texture = FACE_TEXTURE
+	face.Face = Enum.NormalId.Front
+	face.Parent = head
+end
+
+local function darker(c: Color3, f: number): Color3
+	return Color3.new(c.R * f, c.G * f, c.B * f)
+end
+
+local function buildBody(model: Model, root: BasePart, mobId: string, def: MobDB.MobDef)
+	local s = if def.isBoss then 1.6 else 1.0
+	local c = def.modelColor
+	local archetype = Archetypes[mobId] or "quadruped"
+
+	if archetype == "quadruped" then
+		deco(model, root, "Body", Vector3.new(2.4 * s, 1.6 * s, 4 * s), CFrame.new(0, -0.4 * s, 0), c)
+		local head = deco(model, root, "Head", Vector3.new(1.6 * s, 1.6 * s, 1.6 * s), CFrame.new(0, 0.4 * s, -2.6 * s), c)
+		addFace(head)
+		deco(model, root, "EarL", Vector3.new(0.4 * s, 0.6 * s, 0.3 * s), CFrame.new(-0.5 * s, 1.4 * s, -2.6 * s), darker(c, 0.7))
+		deco(model, root, "EarR", Vector3.new(0.4 * s, 0.6 * s, 0.3 * s), CFrame.new(0.5 * s, 1.4 * s, -2.6 * s), darker(c, 0.7))
+		deco(model, root, "Tail", Vector3.new(0.4 * s, 0.4 * s, 1.6 * s), CFrame.new(0, 0, 2.6 * s), darker(c, 0.7))
+		for _, x in ipairs({ -0.9, 0.9 }) do
+			for _, z in ipairs({ -1.4, 1.4 }) do
+				deco(model, root, "Leg", Vector3.new(0.6 * s, 1.6 * s, 0.6 * s), CFrame.new(x * s, -1.6 * s, z * s), darker(c, 0.8))
+			end
+		end
+	elseif archetype == "humanoid" then
+		deco(model, root, "Torso", Vector3.new(2 * s, 2.2 * s, 1.1 * s), CFrame.new(0, 0.1 * s, 0), c)
+		local head = deco(model, root, "Head", Vector3.new(1.5 * s, 1.5 * s, 1.5 * s), CFrame.new(0, 2 * s, 0), Color3.fromRGB(230, 190, 150))
+		addFace(head)
+		deco(model, root, "Bandana", Vector3.new(1.6 * s, 0.4 * s, 1.6 * s), CFrame.new(0, 2.65 * s, 0), Color3.fromRGB(160, 30, 30))
+		deco(model, root, "ArmL", Vector3.new(0.7 * s, 2 * s, 0.7 * s), CFrame.new(-1.4 * s, 0.1 * s, 0), darker(c, 0.85))
+		deco(model, root, "ArmR", Vector3.new(0.7 * s, 2 * s, 0.7 * s), CFrame.new(1.4 * s, 0.1 * s, 0), darker(c, 0.85))
+		deco(model, root, "LegL", Vector3.new(0.8 * s, 2 * s, 0.8 * s), CFrame.new(-0.5 * s, -2 * s, 0), darker(c, 0.6))
+		deco(model, root, "LegR", Vector3.new(0.8 * s, 2 * s, 0.8 * s), CFrame.new(0.5 * s, -2 * s, 0), darker(c, 0.6))
+		-- simple blade so fighters read as armed
+		deco(model, root, "Blade", Vector3.new(0.25 * s, 2.4 * s, 0.25 * s), CFrame.new(1.4 * s, 1.6 * s, -0.6 * s), Color3.fromRGB(200, 200, 210))
+	elseif archetype == "golem" then
+		deco(model, root, "Base", Vector3.new(3 * s, 3 * s, 3 * s), CFrame.new(0, -1 * s, 0), c, Enum.PartType.Ball)
+		deco(model, root, "Mid", Vector3.new(2.2 * s, 2.2 * s, 2.2 * s), CFrame.new(0, 0.9 * s, 0), darker(c, 0.85), Enum.PartType.Ball)
+		local head = deco(model, root, "Head", Vector3.new(1.4 * s, 1.4 * s, 1.4 * s), CFrame.new(0, 2.3 * s, 0), darker(c, 0.7))
+		local eyeL = deco(model, root, "EyeL", Vector3.new(0.25 * s, 0.25 * s, 0.1), CFrame.new(-0.3 * s, 2.4 * s, -0.7 * s), Color3.fromRGB(255, 170, 0))
+		local eyeR = deco(model, root, "EyeR", Vector3.new(0.25 * s, 0.25 * s, 0.1), CFrame.new(0.3 * s, 2.4 * s, -0.7 * s), Color3.fromRGB(255, 170, 0))
+		eyeL.Material = Enum.Material.Neon
+		eyeR.Material = Enum.Material.Neon
+		local _ = head
+	elseif archetype == "treant" then
+		local trunk = deco(model, root, "Trunk", Vector3.new(2.2 * s, 4.5 * s, 2.2 * s), CFrame.new(0, -0.5 * s, 0), Color3.fromRGB(90, 60, 35))
+		trunk.Material = Enum.Material.Wood
+		addFace(trunk)
+		local crown = deco(model, root, "Crown", Vector3.new(4.5 * s, 3.5 * s, 4.5 * s), CFrame.new(0, 3 * s, 0), c, Enum.PartType.Ball)
+		crown.Material = Enum.Material.Grass
+		deco(model, root, "BranchL", Vector3.new(2.6 * s, 0.5 * s, 0.5 * s), CFrame.new(-2 * s, 0.8 * s, 0), Color3.fromRGB(90, 60, 35))
+		deco(model, root, "BranchR", Vector3.new(2.6 * s, 0.5 * s, 0.5 * s), CFrame.new(2 * s, 0.8 * s, 0), Color3.fromRGB(90, 60, 35))
+	end
+end
+
 local function makeMobModel(mobId: string, def: MobDB.MobDef, position: Vector3): Model?
 	local model = Instance.new("Model")
 	model.Name = mobId
@@ -117,8 +215,10 @@ local function makeMobModel(mobId: string, def: MobDB.MobDef, position: Vector3)
 	body.CFrame = CFrame.new(position)
 	body.Anchored = false
 	body.Parent = model
-	body.BrickColor = BrickColor.new("Medium stone grey")
+	body.Transparency = 1 -- invisible physics root; the visible body is built around it
 	body.Color = def.modelColor
+
+	buildBody(model, body, mobId, def)
 
 	local hum = Instance.new("Humanoid")
 	hum.MaxHealth = def.health
@@ -241,7 +341,7 @@ local function onMobDeath(
 		if data then
 			local goldAmt = math.random(def.goldDrop.min, def.goldDrop.max)
 			DataServer.AddGold(nearestPlayer, goldAmt)
-			DataServer.AddMastery(nearestPlayer, def.masteryLine, def.masteryXP)
+			DataServer.AddMastery(nearestPlayer, def.masteryLine, math.floor(def.masteryXP * AdminServer.State.xpMult))
 			RemotesUpdateMastery:FireClient(nearestPlayer, data.mastery)
 			RemotesMobDied:FireClient(nearestPlayer, mobId, goldAmt)
 			QuestServer.Progress(nearestPlayer, "kill", mobId, 1)
@@ -332,7 +432,13 @@ local function setupMobBehavior(model: Model, mobId: string, def: MobDB.MobDef, 
 				local dist = (charRoot.Position - root.Position).Magnitude
 				if dist > def.attackRange then
 					local dir = (charRoot.Position - root.Position).Unit
-					root.CFrame = root.CFrame + dir * def.speed * dt
+					local newPos = root.Position + dir * def.speed * dt
+					local look = Vector3.new(dir.X, 0, dir.Z)
+					if look.Magnitude > 0.01 then
+						root.CFrame = CFrame.lookAt(newPos, newPos + look)
+					else
+						root.CFrame = CFrame.new(newPos)
+					end
 				else
 					local now = tick()
 					if now - lastAttack >= def.attackCooldown then
@@ -366,7 +472,13 @@ local function setupMobBehavior(model: Model, mobId: string, def: MobDB.MobDef, 
 			local dist = (root.Position - spawnPos).Magnitude
 			if dist > 20 then
 				local dir = (Vector3.new(spawnPos.X, root.Position.Y, spawnPos.Z) - root.Position).Unit
-				root.CFrame = root.CFrame + dir * def.speed * 0.5 * dt
+				local newPos = root.Position + dir * def.speed * 0.5 * dt
+				local look = Vector3.new(dir.X, 0, dir.Z)
+				if look.Magnitude > 0.01 then
+					root.CFrame = CFrame.lookAt(newPos, newPos + look)
+				else
+					root.CFrame = CFrame.new(newPos)
+				end
 			end
 		end
 	end)

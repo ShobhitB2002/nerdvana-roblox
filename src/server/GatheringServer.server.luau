@@ -10,6 +10,7 @@ end
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataServer = require(script.Parent.DataServer)
 local QuestServer = require(script.Parent.QuestServer)
+local AdminServer = require(script.Parent.AdminServer)
 local ItemDB = require(ReplicatedStorage.Modules.ItemDB)
 local Shared = require(ReplicatedStorage.Modules.Shared)
 local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
@@ -150,6 +151,8 @@ local function onGather(player: Player, trunk: BasePart)
 		end
 	end
 
+	gatherQty = math.max(1, math.floor(gatherQty * AdminServer.State.gatherMult))
+
 	local ok, reason = DataServer.AddToInventory(player, resourceId, gatherQty, nil)
 	if not ok then
 		if reason == "overweight" then
@@ -159,7 +162,7 @@ local function onGather(player: Player, trunk: BasePart)
 		return
 	end
 
-	DataServer.AddMastery(player, masteryLineFor(resourceId), masteryXP * gatherQty)
+	DataServer.AddMastery(player, masteryLineFor(resourceId), math.floor(masteryXP * gatherQty * AdminServer.State.xpMult))
 	UpdateMastery:FireClient(player, data.mastery)
 	UpdateInventory:FireClient(player, data.inventory, data.equipped)
 	QuestServer.Progress(player, "collect", resourceId, gatherQty)

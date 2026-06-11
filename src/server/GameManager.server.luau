@@ -9,6 +9,7 @@ local ok, err = pcall(function()
 	require(script.Parent.DataServer)
 	require(script.Parent.QuestServer)
 	require(script.Parent.BossServer)
+	require(script.Parent.AdminServer)
 end)
 if ok then
 	print("[Nerdvana] All systems loaded.")

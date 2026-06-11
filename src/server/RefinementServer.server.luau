@@ -10,6 +10,7 @@ end
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataServer = require(script.Parent.DataServer)
 local QuestServer = require(script.Parent.QuestServer)
+local AdminServer = require(script.Parent.AdminServer)
 local RecipeDB = require(ReplicatedStorage.Modules.RecipeDB)
 local Shared = require(ReplicatedStorage.Modules.Shared)
 local RarityRoller = require(ReplicatedStorage.Modules.RarityRoller)
@@ -59,10 +60,10 @@ CraftItem.OnServerEvent:Connect(function(player: Player, recipeId: unknown)
 		DataServer.RemoveFromInventory(player, itemId, qty)
 	end
 
-	local rarity, _color = RarityRoller.Roll(data.isCorrupted)
+	local rarity, _color = RarityRoller.Roll(data.isCorrupted or AdminServer.State.rarityBoost)
 	DataServer.AddToInventory(player, recipe.output, recipe.outputQty, rarity)
 
-	DataServer.AddMastery(player, recipe.masteryLine, recipe.masteryXP)
+	DataServer.AddMastery(player, recipe.masteryLine, math.floor(recipe.masteryXP * AdminServer.State.xpMult))
 	UpdateMastery:FireClient(player, data.mastery)
 	UpdateInventory:FireClient(player, data.inventory, data.equipped)
 	CraftItem:FireClient(player, true, recipe.output, rarity)

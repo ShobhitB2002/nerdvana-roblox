@@ -228,6 +228,15 @@ function DataServer.RemoveFromInventory(player: Player, itemId: string, qty: num
 	return ok
 end
 
+function DataServer.Reset(player: Player)
+	PlayerData[player.UserId] = defaultData()
+	local d = PlayerData[player.UserId] :: PlayerSave
+	DataServer.PushHUD(player)
+	UpdateInventory:FireClient(player, d.inventory, d.equipped)
+	UpdateMastery:FireClient(player, d.mastery)
+	DataServer.Save(player)
+end
+
 local function loadData(player: Player)
 	-- Reserve slot immediately so gathering/combat cannot run with nil data while GetAsync yields.
 	PlayerData[player.UserId] = defaultData()

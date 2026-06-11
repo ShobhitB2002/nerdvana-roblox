@@ -18,6 +18,8 @@ local invGui = PlayerGui:WaitForChild("InventoryGui") :: ScreenGui
 local background = invGui:WaitForChild("Background") :: Frame
 local itemList = background:WaitForChild("ItemList") :: ScrollingFrame
 local tabRow = background:WaitForChild("TabRow") :: Frame
+local invCloseBtn = background:WaitForChild("CloseButton") :: TextButton
+local invBackdrop = invGui:WaitForChild("Backdrop") :: TextButton
 local hud = PlayerGui:WaitForChild("HUD") :: ScreenGui
 local backpackButton = hud:WaitForChild("BackpackButton") :: TextButton
 
@@ -201,13 +203,24 @@ end
 
 local invOpen = false
 
+local function setInventoryOpen(open: boolean)
+	invOpen = open
+	background.Visible = open
+	invBackdrop.Visible = open
+end
+
 local function toggleInventory()
-	invOpen = not invOpen
-	background.Visible = invOpen
+	setInventoryOpen(not invOpen)
 end
 
 backpackButton.MouseButton1Click:Connect(function()
 	toggleInventory()
+end)
+invCloseBtn.MouseButton1Click:Connect(function()
+	setInventoryOpen(false)
+end)
+invBackdrop.MouseButton1Click:Connect(function()
+	setInventoryOpen(false)
 end)
 
 UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)

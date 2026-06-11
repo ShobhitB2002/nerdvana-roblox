@@ -34,13 +34,15 @@
         "EnterPortal": { "$className": "RemoteEvent" },
         "QuestUpdate": { "$className": "RemoteEvent" },
         "GatherFeedback": { "$className": "RemoteEvent" },
-        "RequestSync": { "$className": "RemoteEvent" }
+        "RequestSync": { "$className": "RemoteEvent" },
+        "AdminCommand": { "$className": "RemoteEvent" }
       }
     },
 
     "ServerScriptService": {
       "DataServer": { "$path": "src/server/DataServer.luau" },
       "QuestServer": { "$path": "src/server/QuestServer.luau" },
+      "AdminServer": { "$path": "src/server/AdminServer.luau" },
       "GameManager": { "$path": "src/server/GameManager.server.luau" },
       "IslandGenerator": { "$path": "src/server/IslandGenerator.server.luau" },
       "MobAI": { "$path": "src/server/MobAI.server.luau" },
@@ -73,7 +75,8 @@
         "GatherEffects": { "$path": "src/client/GatherEffects.client.luau" },
         "DialogueClient": { "$path": "src/client/DialogueClient.client.luau" },
         "StationClient": { "$path": "src/client/StationClient.client.luau" },
-        "QuestClient": { "$path": "src/client/QuestClient.client.luau" }
+        "QuestClient": { "$path": "src/client/QuestClient.client.luau" },
+        "AdminClient": { "$path": "src/client/AdminClient.client.luau" }
       }
     },
 
