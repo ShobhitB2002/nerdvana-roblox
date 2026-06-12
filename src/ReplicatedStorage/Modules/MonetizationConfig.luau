@@ -10,27 +10,27 @@
 
 local MonetizationConfig = {}
 
--- One-time purchases (Gamepasses) — paste gamepass IDs
+-- One-time purchases (Gamepasses)
 MonetizationConfig.Gamepasses = {
-	VIP = 0, -- +25% Gold & XP forever, VIP chat tag color
-	AutoGather = 0, -- automatically gathers nearby resources
-	AutoPickup = 0, -- automatically picks up nearby loot
-	Luck2x = 0, -- double odds for rare crafts & eggs
-	CompanionSlots = 0, -- +3 equipped companion slots (6 total)
-	BiggerBag = 0, -- +50 carry weight forever
+	VIP = 1876070427, -- +25% Gold & XP forever, VIP chat tag color
+	AutoGather = 1876196416, -- automatically gathers nearby resources
+	AutoPickup = 1876010429, -- automatically picks up nearby loot
+	Luck2x = 1876412411, -- double odds for rare crafts & eggs
+	CompanionSlots = 1874496420, -- +3 equipped companion slots (6 total)
+	BiggerBag = 1875764438, -- +50 carry weight forever
 }
 
--- Repeatable purchases (Developer Products) — paste product IDs
+-- Repeatable purchases (Developer Products)
 MonetizationConfig.Products = {
-	Diamonds100 = 0,
-	Diamonds550 = 0, -- 10% bonus
-	Diamonds1200 = 0, -- 20% bonus
-	Diamonds3000 = 0, -- 50% bonus
-	Gold5k = 0,
-	Gold25k = 0,
-	LuckPotion30 = 0, -- 30 min of 2x luck
-	GoldPotion30 = 0, -- 30 min of 2x gold
-	InstantRebirth = 0, -- rebirth without beating the boss
+	Diamonds100 = 3604109258,
+	Diamonds550 = 3604109416, -- 10% bonus
+	Diamonds1200 = 3604109581, -- 20% bonus
+	Diamonds3000 = 3604109713, -- 50% bonus
+	Gold5k = 3604109919,
+	Gold25k = 3604110250,
+	LuckPotion30 = 3604110394, -- 30 min of 2x luck
+	GoldPotion30 = 3604110536, -- 30 min of 2x gold
+	InstantRebirth = 3604110946, -- rebirth without beating the boss
 }
 
 export type AuraDef = { id: string, name: string, cost: number, color: Color3 }
