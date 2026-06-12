@@ -13,7 +13,8 @@ local MobDB = require(ReplicatedStorage.Modules.MobDB)
 local DataServer = require(script.Parent.DataServer)
 local BossServer = require(script.Parent.BossServer)
 local QuestServer = require(script.Parent.QuestServer)
-local AdminServer = require(script.Parent.AdminServer)
+local BoostServer = require(script.Parent.BoostServer)
+local GameConfig = require(ReplicatedStorage.Modules.GameConfig)
 local ItemDB = require(ReplicatedStorage.Modules.ItemDB)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
@@ -29,10 +30,10 @@ export type SpawnPoint = {
 }
 
 -- Safe zones: mobs never aggro or damage players inside these
-local CORRUPT_OFFSET = Vector3.new(3000, 0, 0)
+local CORRUPT_OFFSET = GameConfig.CORRUPT_OFFSET
 local SafeZones: { { center: Vector3, radius: number } } = {
-	{ center = Vector3.new(0, 0, 0), radius = 95 }, -- village plaza
-	{ center = CORRUPT_OFFSET, radius = 45 }, -- corrupted return pad
+	{ center = Vector3.new(0, 0, 0), radius = GameConfig.VILLAGE_RADIUS }, -- village plaza
+	{ center = CORRUPT_OFFSET, radius = GameConfig.CORRUPT_SAFE_RADIUS }, -- corrupted return pad
 }
 
 local function inSafeZone(pos: Vector3): boolean
@@ -68,20 +69,38 @@ local SpawnPoints: { SpawnPoint } = {
 	-- West forest: wolves near the treeline, alpha deep in the woods
 	{ mobId = "Wolf", pos = Vector3.new(-190, 3, -60), count = 5 },
 	{ mobId = "Wolf", pos = Vector3.new(-240, 3, 90), count = 5 },
+	{ mobId = "Wolf", pos = Vector3.new(-320, 3, -40), count = 4 },
 	{ mobId = "Bear", pos = Vector3.new(-330, 3, -120), count = 3 },
 	{ mobId = "WolfBoss", pos = Vector3.new(-380, 3, 20), count = 1 },
 	{ mobId = "ForestMiniboss", pos = Vector3.new(-340, 3, 160), count = 1 },
+
+	-- Deep Forest (far west): bears + the legendary Golden Wolf
+	{ mobId = "Bear", pos = Vector3.new(-560, 3, 60), count = 4 },
+	{ mobId = "Wolf", pos = Vector3.new(-600, 3, -120), count = 5 },
+	{ mobId = "GoldenWolf", pos = Vector3.new(-650, 3, -250), count = 1 },
 
 	-- East rocks: elementals guard the ore fields
 	{ mobId = "Elemental", pos = Vector3.new(220, 3, -60), count = 4 },
 	{ mobId = "Elemental", pos = Vector3.new(290, 3, 90), count = 3 },
 	{ mobId = "MountainMiniboss", pos = Vector3.new(380, 3, 0), count = 1 },
 
+	-- Mine Cave (northeast): crystal golems
+	{ mobId = "CrystalGolem", pos = Vector3.new(540, 3, -540), count = 4 },
+	{ mobId = "CrystalGolem", pos = Vector3.new(600, 3, -600), count = 3 },
+
 	-- South plains: bandit camp + captain arena
 	{ mobId = "Bandit", pos = Vector3.new(120, 3, 220), count = 4 },
 	{ mobId = "Bandit", pos = Vector3.new(-110, 3, 250), count = 4 },
 	{ mobId = "BanditCaptain", pos = Vector3.new(0, 3, 330), count = 1 },
 	{ mobId = "SwampBeast", pos = Vector3.new(280, 3, 300), count = 4 },
+
+	-- Bandit Fortress (far south): packed with bandits + the Bandit Lord
+	{ mobId = "Bandit", pos = Vector3.new(-40, 3, 600), count = 5 },
+	{ mobId = "Bandit", pos = Vector3.new(40, 3, 640), count = 5 },
+	{ mobId = "BanditLord", pos = Vector3.new(0, 3, 660), count = 1 },
+
+	-- Lake area: a few lurkers
+	{ mobId = "SwampBeast", pos = Vector3.new(520, 3, 420), count = 3 },
 
 	-- North: beast boss arena guards the portal
 	{ mobId = "Wolf", pos = Vector3.new(-90, 3, -200), count = 3 },
@@ -92,6 +111,7 @@ local SpawnPoints: { SpawnPoint } = {
 	{ mobId = "Bandit", pos = CORRUPT_OFFSET + Vector3.new(110, 3, 130), count = 5, corrupted = true },
 	{ mobId = "Bear", pos = CORRUPT_OFFSET + Vector3.new(-140, 3, 120), count = 3, corrupted = true },
 	{ mobId = "Elemental", pos = CORRUPT_OFFSET + Vector3.new(150, 3, -110), count = 3, corrupted = true },
+	{ mobId = "CrystalGolem", pos = CORRUPT_OFFSET + Vector3.new(-180, 3, -160), count = 3, corrupted = true },
 	{ mobId = "WolfBoss", pos = CORRUPT_OFFSET + Vector3.new(0, 3, -180), count = 1, corrupted = true },
 	{ mobId = "BanditCaptain", pos = CORRUPT_OFFSET + Vector3.new(0, 3, 190), count = 1, corrupted = true },
 	{ mobId = "BeastBoss", pos = CORRUPT_OFFSET + Vector3.new(180, 3, 0), count = 1, corrupted = true },
@@ -339,9 +359,12 @@ local function onMobDeath(
 	if nearestPlayer and minDist < 80 then
 		local data = DataServer.Get(nearestPlayer)
 		if data then
-			local goldAmt = math.random(def.goldDrop.min, def.goldDrop.max)
+			local mults = BoostServer.GetMults(nearestPlayer)
+			local goldAmt = math.floor(math.random(def.goldDrop.min, def.goldDrop.max) * mults.gold)
 			DataServer.AddGold(nearestPlayer, goldAmt)
-			DataServer.AddMastery(nearestPlayer, def.masteryLine, math.floor(def.masteryXP * AdminServer.State.xpMult))
+			DataServer.AddMastery(nearestPlayer, def.masteryLine, math.max(1, math.floor(def.masteryXP * mults.xp)))
+			data.stats.mobKills += 1
+			data.index.mobs[mobId] = true
 			RemotesUpdateMastery:FireClient(nearestPlayer, data.mastery)
 			RemotesMobDied:FireClient(nearestPlayer, mobId, goldAmt)
 			QuestServer.Progress(nearestPlayer, "kill", mobId, 1)
@@ -459,7 +482,9 @@ local function setupMobBehavior(model: Model, mobId: string, def: MobDB.MobDef, 
 											end
 										end
 									end
-									local finalDmg = math.max(1, def.damage - math.floor(defense * 0.3))
+									-- Higher rebirths = the world hits harder
+									local rebirthScale = 1 + data.rebirths * GameConfig.REBIRTH_DMG_TAKEN_PER
+									local finalDmg = math.max(1, math.floor(def.damage * rebirthScale) - math.floor(defense * 0.3))
 									hum2:TakeDamage(finalDmg)
 								end
 							end

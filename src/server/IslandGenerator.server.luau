@@ -15,9 +15,12 @@ if not RunService:IsServer() then
 	return
 end
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GameConfig = require(ReplicatedStorage.Modules.GameConfig)
+
 local rng = Random.new(42) -- deterministic: same island every server
 
-local CORRUPT_OFFSET = Vector3.new(3000, 0, 0)
+local CORRUPT_OFFSET = GameConfig.CORRUPT_OFFSET
 
 local Island = Instance.new("Folder")
 Island.Name = "Island"
@@ -95,10 +98,10 @@ end
 -- TERRAIN
 -- ============================================================
 
-local ground = makePart("Ground", Vector3.new(900, 2, 900), Vector3.new(0, -1, 0), "Bright green")
+local ground = makePart("Ground", Vector3.new(1600, 2, 1600), Vector3.new(0, -1, 0), "Bright green")
 ground.Material = Enum.Material.Grass
 
-local water = makePart("Water", Vector3.new(1400, 1, 1400), Vector3.new(0, -4.5, 0), "Bright blue")
+local water = makePart("Water", Vector3.new(2400, 1, 2400), Vector3.new(0, -4.5, 0), "Bright blue")
 water.Material = Enum.Material.SmoothPlastic
 water.Transparency = 0.45
 water.CanCollide = false
@@ -124,9 +127,11 @@ local function makePath(p1: Vector3, p2: Vector3, width: number)
 end
 
 makePath(Vector3.new(0, 0, -75), Vector3.new(0, 0, -320), 12) -- north to portal
-makePath(Vector3.new(0, 0, 75), Vector3.new(0, 0, 360), 12) -- south to bandit camp
-makePath(Vector3.new(-75, 0, 0), Vector3.new(-380, 0, 0), 12) -- west to forest
+makePath(Vector3.new(0, 0, 75), Vector3.new(0, 0, 700), 12) -- south to bandit fortress
+makePath(Vector3.new(-75, 0, 0), Vector3.new(-720, 0, 0), 12) -- west through deep forest
 makePath(Vector3.new(75, 0, 0), Vector3.new(380, 0, 0), 12) -- east to rocks
+makePath(Vector3.new(380, 0, -60), Vector3.new(560, 0, -520), 10) -- rocks to mine cave
+makePath(Vector3.new(300, 0, 300), Vector3.new(480, 0, 440), 10) -- swamp to lake
 
 -- ============================================================
 -- VILLAGE: buildings, NPCs, stations, statues
@@ -200,6 +205,7 @@ local stationDefs: { StationDef } = {
 	{ name = "Stonecutter", label = "Stonecutter", pos = Vector3.new(-20, 0, -50), color = "Medium stone grey", size = Vector3.new(8, 5, 8) },
 	{ name = "MerchantStall", label = "Merchant Stall", pos = Vector3.new(-14, 0, 44), color = "Bright green", size = Vector3.new(8, 4, 6) },
 	{ name = "ExchangeBoard", label = "Marketplace Board", pos = Vector3.new(14, 0, 44), color = "Medium stone grey", size = Vector3.new(5, 6, 1), comingSoon = true },
+	{ name = "RebirthShrine", label = "Rebirth Shrine", pos = Vector3.new(0, 0, -38), color = "Royal purple", size = Vector3.new(7, 7, 7) },
 }
 
 local function buildStation(sd: StationDef, parent: Folder, posOverride: Vector3?)
@@ -223,7 +229,14 @@ local function buildStation(sd: StationDef, parent: Folder, posOverride: Vector3
 	end
 
 	-- Per-station accents so each reads at a glance
-	if sd.name == "Forge" or sd.name == "Smeltery" then
+	if sd.name == "RebirthShrine" then
+		sp.Material = Enum.Material.Neon
+		sp.Transparency = 0.2
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(170, 70, 255)
+		light.Range = 20
+		light.Parent = sp
+	elseif sd.name == "Forge" or sd.name == "Smeltery" then
 		local ember = makePart(sd.name .. "_Ember", Vector3.new(2.5, 0.6, 2.5), pos + Vector3.new(0, sd.size.Y + 0.9, 0), "Neon orange", parent)
 		ember.Material = Enum.Material.Neon
 	elseif sd.name == "Sawmill" then
@@ -323,15 +336,17 @@ end
 -- RESOURCE NODES
 -- ============================================================
 
-local function plantTree(pos: Vector3, tier: number, corrupted: boolean)
+local function plantTree(pos: Vector3, tier: number, corrupted: boolean, yieldBonus: number?)
 	local folder = Instance.new("Folder")
 	folder.Name = "Tree_T" .. tostring(tier)
 	folder.Parent = Island
-	local trunkColor = if corrupted then "Black" else "Reddish brown"
+	local big = (yieldBonus or 0) > 0
+	local scale = if big then 1.8 else 1
+	local trunkColor = if corrupted then "Black" elseif big then "Dark taupe" else "Reddish brown"
 	local leafColor = if corrupted then "Dark indigo" else (if tier == 1 then "Bright green" else "Dark green")
-	local trunk = makePart("Trunk", Vector3.new(2, 6 + tier * 2, 2), pos + Vector3.new(0, 3 + tier, 0), trunkColor, folder)
+	local trunk = makePart("Trunk", Vector3.new(2 * scale, (6 + tier * 2) * scale, 2 * scale), pos + Vector3.new(0, (3 + tier) * scale, 0), trunkColor, folder)
 	trunk.Material = Enum.Material.Wood
-	local leaves = makePart("Leaves", Vector3.new(8 + tier, 6 + tier, 8 + tier), pos + Vector3.new(0, 8 + tier * 2, 0), leafColor, folder)
+	local leaves = makePart("Leaves", Vector3.new(8 + tier, 6 + tier, 8 + tier) * scale, pos + Vector3.new(0, (8 + tier * 2) * scale, 0), leafColor, folder)
 	leaves.Shape = Enum.PartType.Ball
 	leaves.Material = Enum.Material.Grass
 	local rtag = Instance.new("StringValue")
@@ -342,11 +357,18 @@ local function plantTree(pos: Vector3, tier: number, corrupted: boolean)
 	xptag.Name = "MasteryXP"
 	xptag.Value = if corrupted then tier * 2 else tier -- corrupted zone = faster mastery
 	xptag.Parent = trunk
+	if yieldBonus and yieldBonus > 0 then
+		local ytag = Instance.new("IntValue")
+		ytag.Name = "YieldBonus"
+		ytag.Value = yieldBonus
+		ytag.Parent = trunk
+		makeLabel(trunk, "Ancient Tree")
+	end
 	local prompt = Instance.new("ProximityPrompt")
-	prompt.ActionText = "Chop (T" .. tostring(tier) .. ")"
+	prompt.ActionText = if big then "Chop Ancient (T" .. tostring(tier) .. ")" else "Chop (T" .. tostring(tier) .. ")"
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.MaxActivationDistance = 10
-	prompt.HoldDuration = 1.5
+	prompt.HoldDuration = if big then 2.5 else 1.5
 	prompt.Parent = trunk
 end
 
@@ -423,6 +445,133 @@ for i = 1, 12 do
 	local r = 105 + rng:NextNumber(-8, 12)
 	plantTree(Vector3.new(math.cos(angle) * r, 0, math.sin(angle) * r), 1, false)
 end
+
+-- ============================================================
+-- DEEP FOREST (far west): T2 + Ancient trees
+-- ============================================================
+
+for _ = 1, 50 do
+	local pos = Vector3.new(rng:NextNumber(-760, -480), 0, rng:NextNumber(-300, 300))
+	plantTree(pos, 2, false)
+end
+for _ = 1, 12 do
+	local pos = Vector3.new(rng:NextNumber(-740, -520), 0, rng:NextNumber(-260, 260))
+	plantTree(pos, 2, false, 2) -- Ancient trees: triple yield
+end
+
+-- ============================================================
+-- MINE CAVE (northeast): walled quarry packed with nodes
+-- ============================================================
+
+do
+	local center = Vector3.new(560, 0, -560)
+	local caveFloor = makePart("CaveFloor", Vector3.new(320, 0.4, 320), center + Vector3.new(0, 0.2, 0), "Dark grey")
+	caveFloor.Material = Enum.Material.Slate
+
+	-- Rock wall ring with a southwest entrance gap
+	for i = 0, 23 do
+		local angle = (i / 24) * math.pi * 2
+		-- leave a gap facing the village (southwest direction)
+		local towardVillage = math.atan2(-center.Z, -center.X)
+		local diff = math.abs(math.atan2(math.sin(angle - towardVillage), math.cos(angle - towardVillage)))
+		if diff > 0.4 then
+			local wallPos = center + Vector3.new(math.cos(angle) * 150, 9, math.sin(angle) * 150)
+			local wall = makePart("CaveWall", Vector3.new(42, 20, 14), wallPos, "Dark grey")
+			wall.Material = Enum.Material.Slate
+			wall.CFrame = CFrame.lookAt(wallPos, Vector3.new(center.X, 9, center.Z))
+		end
+	end
+
+	for _ = 1, 22 do
+		local pos = center + Vector3.new(rng:NextNumber(-130, 130), 0, rng:NextNumber(-130, 130))
+		plantNode(pos, if rng:NextNumber() < 0.4 then 2 else 1, "raw_ore", "Mine", false)
+	end
+	for _ = 1, 16 do
+		local pos = center + Vector3.new(rng:NextNumber(-130, 130), 0, rng:NextNumber(-130, 130))
+		plantNode(pos, if rng:NextNumber() < 0.4 then 2 else 1, "raw_stone", "Quarry", false)
+	end
+	makeLabel(makePart("CaveSign", Vector3.new(1, 5, 1), center + Vector3.new(-110, 3, 110), "Dark grey"), "The Mine — rich ore inside")
+end
+
+-- ============================================================
+-- LAKE (southeast): fishing spots
+-- ============================================================
+
+do
+	local center = Vector3.new(520, 0, 470)
+	local lake = makePart("Lake", Vector3.new(1.2, 180, 180), center + Vector3.new(0, -0.3, 0), "Bright blue")
+	lake.Material = Enum.Material.Glass
+	lake.Transparency = 0.35
+	lake.Shape = Enum.PartType.Cylinder
+	lake.CFrame = CFrame.new(center + Vector3.new(0, -0.3, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	lake.CanCollide = true
+
+	for i = 1, 8 do
+		local angle = (i / 8) * math.pi * 2
+		local pos = center + Vector3.new(math.cos(angle) * 95, 0, math.sin(angle) * 95)
+		local post = makePart("FishingSpot", Vector3.new(2, 4, 2), pos + Vector3.new(0, 2.2, 0), "Brown")
+		post.Material = Enum.Material.Wood
+		local rtag = Instance.new("StringValue")
+		rtag.Name = "ResourceType"
+		rtag.Value = "raw_fish"
+		rtag.Parent = post
+		local xptag = Instance.new("IntValue")
+		xptag.Name = "MasteryXP"
+		xptag.Value = 2
+		xptag.Parent = post
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Fish"
+		prompt.KeyboardKeyCode = Enum.KeyCode.E
+		prompt.MaxActivationDistance = 10
+		prompt.HoldDuration = 3
+		prompt.Parent = post
+	end
+	makeLabel(makePart("LakeSign", Vector3.new(1, 4, 1), center + Vector3.new(-100, 2.6, -100), "Brown"), "Crystal Lake — Fishing")
+end
+
+-- ============================================================
+-- BANDIT FORTRESS (far south)
+-- ============================================================
+
+do
+	local center = Vector3.new(0, 0, 630)
+	-- Walls (square with a north gate)
+	local wallDefs = {
+		{ size = Vector3.new(70, 14, 4), off = Vector3.new(-55, 7, -90) }, -- north-left
+		{ size = Vector3.new(70, 14, 4), off = Vector3.new(55, 7, -90) }, -- north-right (gate gap in middle)
+		{ size = Vector3.new(184, 14, 4), off = Vector3.new(0, 7, 90) }, -- south
+		{ size = Vector3.new(4, 14, 184), off = Vector3.new(-90, 7, 0) }, -- west
+		{ size = Vector3.new(4, 14, 184), off = Vector3.new(90, 7, 0) }, -- east
+	}
+	for _, w in ipairs(wallDefs) do
+		local wall = makePart("FortWall", w.size, center + w.off, "Reddish brown")
+		wall.Material = Enum.Material.WoodPlanks
+	end
+	for i = -1, 1 do
+		local hut = makePart("FortHut", Vector3.new(12, 8, 12), center + Vector3.new(i * 34, 4.6, 30), "Brown")
+		hut.Material = Enum.Material.Wood
+	end
+	local throne = makePart("BanditThrone", Vector3.new(6, 8, 4), center + Vector3.new(0, 4.6, 60), "Really black")
+	makeLabel(throne, "Bandit Lord's Throne")
+	makeLabel(makePart("FortSign", Vector3.new(1, 5, 1), center + Vector3.new(0, 3, -100), "Reddish brown"), "BANDIT FORTRESS — boss inside")
+end
+
+-- ============================================================
+-- SEALED FACTION GATES (future zones tease)
+-- ============================================================
+
+local function sealedGate(pos: Vector3, name: string, color: string)
+	local frame = makePart(name .. "_Frame", Vector3.new(40, 36, 6), pos + Vector3.new(0, 18, 0), color)
+	frame.Material = Enum.Material.Marble
+	frame.CFrame = CFrame.lookAt(pos + Vector3.new(0, 18, 0), Vector3.new(0, 18, 0))
+	local door = makePart(name .. "_Door", Vector3.new(26, 28, 2), pos + Vector3.new(0, 14, 0), "Really black")
+	door.Material = Enum.Material.Metal
+	door.CFrame = frame.CFrame
+	makeBillboard(frame, name .. "\n[ Coming Soon ]", Color3.fromRGB(255, 230, 100))
+end
+
+sealedGate(Vector3.new(-200, 0, -760), "ANGEL GATE", "White")
+sealedGate(Vector3.new(760, 0, 200), "DEMON GATE", "Bright red")
 
 -- ============================================================
 -- NORTH: beast boss arena + corrupted portal

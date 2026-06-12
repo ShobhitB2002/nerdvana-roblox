@@ -68,6 +68,18 @@ local function checkCompletion(player: Player)
 	QuestServer.PushState(player, quest.id)
 end
 
+function QuestServer.ResetProgress(player: Player)
+	Progress[player.UserId] = {}
+end
+
+-- Other systems (daily quests, index) can observe every player action
+type ActionListener = (player: Player, actionType: string, key: string, qty: number) -> ()
+local listeners: { ActionListener } = {}
+
+function QuestServer.RegisterListener(fn: ActionListener)
+	table.insert(listeners, fn)
+end
+
 -- Admin: instantly complete the active quest
 function QuestServer.ForceComplete(player: Player)
 	local data = DataServer.Get(player)
@@ -94,6 +106,11 @@ function QuestServer.Progress(player: Player, actionType: string, key: string, q
 	if not data then
 		return
 	end
+
+	for _, fn in ipairs(listeners) do
+		task.spawn(fn, player, actionType, key, qty or 1)
+	end
+
 	local quest = QuestDB.Get(data.quests.active)
 	if not quest then
 		return

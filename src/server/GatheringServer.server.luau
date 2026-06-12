@@ -2,6 +2,7 @@
 -- GatheringServer: Tree gathering via ProximityPrompt
 
 local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 
 if not RunService:IsServer() then
 	return
@@ -10,7 +11,7 @@ end
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataServer = require(script.Parent.DataServer)
 local QuestServer = require(script.Parent.QuestServer)
-local AdminServer = require(script.Parent.AdminServer)
+local BoostServer = require(script.Parent.BoostServer)
 local ItemDB = require(ReplicatedStorage.Modules.ItemDB)
 local Shared = require(ReplicatedStorage.Modules.Shared)
 local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
@@ -106,6 +107,8 @@ local function masteryLineFor(resourceId: string): string
 		return "Ore"
 	elseif string.find(resourceId, "raw_stone", 1, true) then
 		return "Stone"
+	elseif string.find(resourceId, "raw_fish", 1, true) then
+		return "Fishing"
 	end
 	return "Wood"
 end
@@ -151,7 +154,14 @@ local function onGather(player: Player, trunk: BasePart)
 		end
 	end
 
-	gatherQty = math.max(1, math.floor(gatherQty * AdminServer.State.gatherMult))
+	-- Rich nodes (Ancient trees etc.) carry a YieldBonus tag
+	local yieldTag = trunk:FindFirstChild("YieldBonus")
+	if yieldTag and yieldTag:IsA("IntValue") then
+		gatherQty += yieldTag.Value
+	end
+
+	local mults = BoostServer.GetMults(player)
+	gatherQty = math.max(1, math.floor(gatherQty * mults.gather))
 
 	local ok, reason = DataServer.AddToInventory(player, resourceId, gatherQty, nil)
 	if not ok then
@@ -162,10 +172,17 @@ local function onGather(player: Player, trunk: BasePart)
 		return
 	end
 
-	DataServer.AddMastery(player, masteryLineFor(resourceId), math.floor(masteryXP * gatherQty * AdminServer.State.xpMult))
+	DataServer.AddMastery(player, masteryLineFor(resourceId), math.max(1, math.floor(masteryXP * gatherQty * mults.xp)))
+	data.stats.gathered += gatherQty
 	UpdateMastery:FireClient(player, data.mastery)
 	UpdateInventory:FireClient(player, data.inventory, data.equipped)
 	QuestServer.Progress(player, "collect", resourceId, gatherQty)
+
+	-- Fishing has a chance of a small gold bonus (treasure)
+	if resourceId == "raw_fish" and math.random() < 0.15 then
+		local bonus = math.floor(math.random(5, 15) * mults.gold)
+		DataServer.AddGold(player, bonus)
+	end
 
 	local itemDef = ItemDB.Get(resourceId)
 	GatherFeedback:FireClient(player, resourceId, gatherQty, trunk.Position, if itemDef then itemDef.name else resourceId)
@@ -342,5 +359,27 @@ for _, desc in ipairs(workspace:GetDescendants()) do
 	hookTreeTrunk(desc)
 end
 workspace.DescendantAdded:Connect(hookTreeTrunk)
+
+-- Magnet Soul rebirth perk / AutoPickup gamepass: nearby drops collect themselves
+task.spawn(function()
+	while true do
+		task.wait(1.5)
+		for _, player in ipairs(Players:GetPlayers()) do
+			local data = DataServer.Get(player)
+			local hasPerk = data and (data.rebirthPerks["auto_pickup"] or player:GetAttribute("AutoPickup") == true)
+			local char = player.Character
+			local root = if char then char.PrimaryPart else nil
+			if hasPerk and root then
+				for _, part in ipairs(workspace:GetChildren()) do
+					if part:IsA("BasePart") and part.Parent and part:FindFirstChild("ItemId") then
+						if (part.Position - root.Position).Magnitude <= 18 then
+							onPickup(player, part)
+						end
+					end
+				end
+			end
+		end
+	end
+end)
 
 print("[GatheringServer] Ready.")

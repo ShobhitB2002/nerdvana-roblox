@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local DataServer = require(script.Parent.DataServer)
+local RebirthServer = require(script.Parent.RebirthServer)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
 local UnlockPortal = Remotes:WaitForChild("UnlockPortal") :: RemoteEvent
@@ -20,7 +21,9 @@ function BossServer.OnBeastBossDefeated(player: Player)
 
 	DataServer.AddToInventory(player, "boss_seal", 1, nil)
 	data.portalUnlocked = true
+	data.canRebirth = true
 	UnlockPortal:FireClient(player)
+	RebirthServer.PushState(player)
 
 	local portalInner = Workspace:FindFirstChild("Portals")
 	if portalInner then

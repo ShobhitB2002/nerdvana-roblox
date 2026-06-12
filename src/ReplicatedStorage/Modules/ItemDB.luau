@@ -570,6 +570,27 @@ ItemDB.Items = {
 		description = "Hard-soled reinforced boots.",
 	},
 
+	["raw_fish"] = {
+		id = "raw_fish",
+		name = "Fresh Fish",
+		type = "Consumables",
+		tier = 1,
+		weight = 0.5,
+		durabilityMax = nil,
+		stackable = true,
+		stats = { healAmount = 15 },
+		description = "Caught at the lake. Heals 15 HP.",
+	},
+	["golden_fang"] = {
+		id = "golden_fang",
+		name = "Golden Fang",
+		type = "Quest",
+		tier = 3,
+		weight = 0.1,
+		durabilityMax = nil,
+		stackable = true,
+		description = "Trophy from the legendary Golden Wolf.",
+	},
 	["bread"] = {
 		id = "bread",
 		name = "Bread",

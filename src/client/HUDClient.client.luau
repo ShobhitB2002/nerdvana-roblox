@@ -17,6 +17,7 @@ local weightFill = weightBar:WaitForChild("Fill") :: Frame
 local weightLabel = weightBar:WaitForChild("WeightLabel") :: TextLabel
 local healthBar = hud:WaitForChild("HealthBar") :: Frame
 local healthFill = healthBar:WaitForChild("Fill") :: Frame
+local rebirthLabel = hud:WaitForChild("RebirthLabel") :: TextLabel
 
 local function setHealth(humanoid: Humanoid)
 	local pct = if humanoid.MaxHealth > 0 then humanoid.Health / humanoid.MaxHealth else 0
@@ -44,6 +45,8 @@ export type HudPayload = {
 	diamonds: number,
 	weight: number,
 	maxWeight: number,
+	rebirths: number?,
+	goldMult: number?,
 }
 
 UpdateHUD.OnClientEvent:Connect(function(payload: unknown)
@@ -57,6 +60,11 @@ UpdateHUD.OnClientEvent:Connect(function(payload: unknown)
 	local r = math.clamp(p.weight / maxW, 0, 1)
 	weightFill.Size = UDim2.new(r, 0, 1, 0)
 	weightLabel.Text = string.format("%.1f/%.0f kg", p.weight, p.maxWeight)
+	if typeof(p.rebirths) == "number" and p.rebirths > 0 then
+		rebirthLabel.Text = string.format("Rebirth %d  (x%.2f)", p.rebirths, p.goldMult or 1)
+	else
+		rebirthLabel.Text = ""
+	end
 end)
 
 local RequestSync = Remotes:WaitForChild("RequestSync") :: RemoteEvent

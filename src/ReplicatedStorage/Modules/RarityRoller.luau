@@ -27,23 +27,22 @@ RarityRoller.Multipliers = {
 	Mythic = 1.75,
 }
 
-RarityRoller.CorruptedWeightBoost = 1.15
+RarityRoller.CorruptedLuck = 0.15 -- luck bonus while in the corrupted zone
 
-function RarityRoller.Roll(isCorrupted: boolean): (string, Color3)
+-- luckBoost: 0 = normal odds; 1 = rare+ weights doubled
+function RarityRoller.Roll(luckBoost: number): (string, Color3)
+	local boost = math.clamp(luckBoost, 0, 10)
 	local rolled: { RarityEntry } = {}
 	local totalWeight = 0
 	for _, entry in ipairs(RarityRoller.Table) do
 		local w = entry.weight
 		if
-			isCorrupted
-			and (
-				entry.rarity == "Rare"
-				or entry.rarity == "Epic"
-				or entry.rarity == "Legendary"
-				or entry.rarity == "Mythic"
-			)
+			entry.rarity == "Rare"
+			or entry.rarity == "Epic"
+			or entry.rarity == "Legendary"
+			or entry.rarity == "Mythic"
 		then
-			w = math.floor(w * RarityRoller.CorruptedWeightBoost)
+			w = math.floor(w * (1 + boost))
 		end
 		table.insert(rolled, { rarity = entry.rarity, color = entry.color, weight = w })
 		totalWeight += w

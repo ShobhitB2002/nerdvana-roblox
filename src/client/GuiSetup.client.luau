@@ -141,19 +141,38 @@ do
 		TextScaled = true,
 		ZIndex = 2,
 	})
-	-- Backpack (opens same inventory as I key)
-	textButton({
-		Name = "BackpackButton",
+	textLabel({
+		Name = "RebirthLabel",
 		Parent = hud,
-		Position = UDim2.new(1, -56, 1, -120),
-		Size = UDim2.new(0, 44, 0, 44),
-		Text = "Bag",
+		Position = UDim2.new(0, 390, 0, 10),
+		Size = UDim2.new(0, 220, 0, 30),
+		Text = "",
 		Font = Enum.Font.GothamBold,
+		TextColor3 = Color3.fromRGB(190, 110, 255),
+		BackgroundTransparency = 0.5,
+		BackgroundColor3 = Color3.fromRGB(0, 0, 0),
 		TextScaled = true,
-		BackgroundColor3 = Color3.fromRGB(55, 45, 35),
-		TextColor3 = Color3.fromRGB(255, 230, 160),
-		BorderSizePixel = 0,
 	})
+	-- Right-side button column (Bag opens same inventory as I key)
+	local sideButtons = {
+		{ name = "BackpackButton", text = "Bag", color = Color3.fromRGB(55, 45, 35) },
+		{ name = "GiftsButton", text = "Gifts", color = Color3.fromRGB(40, 80, 50) },
+		{ name = "RebirthButton", text = "Rebirth", color = Color3.fromRGB(80, 40, 110) },
+	}
+	for i, def in ipairs(sideButtons) do
+		textButton({
+			Name = def.name,
+			Parent = hud,
+			Position = UDim2.new(1, -64, 1, -120 - (i - 1) * 58),
+			Size = UDim2.new(0, 52, 0, 52),
+			Text = def.text,
+			Font = Enum.Font.GothamBold,
+			TextScaled = true,
+			BackgroundColor3 = def.color,
+			TextColor3 = Color3.fromRGB(255, 230, 160),
+			BorderSizePixel = 0,
+		})
+	end
 	-- Pinch-to-zoom: see CameraAndControls.client.luau (no on-screen +/-)
 	frame({
 		Name = "QuestTrackerFrame",
@@ -232,8 +251,8 @@ do
 	local panel = frame({
 		Name = "MasteryPanel",
 		Parent = mg,
-		Position = UDim2.new(0, 10, 0.3, 0),
-		Size = UDim2.new(0, 220, 0, 280),
+		Position = UDim2.new(0, 10, 0.18, 0),
+		Size = UDim2.new(0, 220, 0, 490),
 		BackgroundColor3 = Color3.fromRGB(18, 18, 28),
 		BackgroundTransparency = 0.1,
 		Visible = false,
@@ -249,7 +268,7 @@ do
 		BackgroundTransparency = 1,
 		TextScaled = true,
 	})
-	local lines = { "Wood", "Hide", "Sword", "Leather", "Tool" }
+	local lines = { "Wood", "Hide", "Ore", "Stone", "Fishing", "Sword", "Leather", "Tool", "Refining", "Blacksmithing" }
 	local y0 = 35
 	for i, line in ipairs(lines) do
 		local bar = frame({

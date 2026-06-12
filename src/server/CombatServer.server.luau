@@ -9,7 +9,7 @@ end
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataServer = require(script.Parent.DataServer)
-local AdminServer = require(script.Parent.AdminServer)
+local BoostServer = require(script.Parent.BoostServer)
 local ItemDB = require(ReplicatedStorage.Modules.ItemDB)
 local Shared = require(ReplicatedStorage.Modules.Shared)
 local RarityRoller = require(ReplicatedStorage.Modules.RarityRoller)
@@ -61,7 +61,7 @@ CombatHit.OnServerEvent:Connect(function(player: Player, mobModel: unknown)
 		return
 	end
 
-	healthVal.Value -= math.floor(damage * AdminServer.State.damageMult)
+	healthVal.Value -= math.max(1, math.floor(damage * BoostServer.GetMults(player).damage))
 
 	SwingCooldowns[uid] = true
 	task.delay(1 / attackSpeed, function()

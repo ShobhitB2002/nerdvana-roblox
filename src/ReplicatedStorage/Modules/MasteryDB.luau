@@ -3,10 +3,10 @@
 
 local MasteryDB = {}
 
-MasteryDB.Lines = { 
-	"Wood", "Hide", "Ore", "Stone",           -- Gathering
-	"Sword", "Bow", "Staff", "Dagger",         -- Combat  
-	"Leather", "Blacksmithing", "Tool", "Refining" -- Crafting
+MasteryDB.Lines = {
+	"Wood", "Hide", "Ore", "Stone", "Fishing", -- Gathering
+	"Sword", "Bow", "Staff", "Dagger", -- Combat
+	"Leather", "Blacksmithing", "Tool", "Refining", -- Crafting
 }
 
 MasteryDB.TierThresholds = {

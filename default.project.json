@@ -6,6 +6,7 @@
     "ReplicatedStorage": {
       "Modules": {
         "$className": "Folder",
+        "GameConfig": { "$path": "src/ReplicatedStorage/Modules/GameConfig.luau" },
         "ItemDB": { "$path": "src/ReplicatedStorage/Modules/ItemDB.luau" },
         "RecipeDB": { "$path": "src/ReplicatedStorage/Modules/RecipeDB.luau" },
         "MasteryDB": { "$path": "src/ReplicatedStorage/Modules/MasteryDB.luau" },
@@ -35,7 +36,9 @@
         "QuestUpdate": { "$className": "RemoteEvent" },
         "GatherFeedback": { "$className": "RemoteEvent" },
         "RequestSync": { "$className": "RemoteEvent" },
-        "AdminCommand": { "$className": "RemoteEvent" }
+        "AdminCommand": { "$className": "RemoteEvent" },
+        "RebirthAction": { "$className": "RemoteEvent" },
+        "RewardsAction": { "$className": "RemoteEvent" }
       }
     },
 
@@ -43,6 +46,10 @@
       "DataServer": { "$path": "src/server/DataServer.luau" },
       "QuestServer": { "$path": "src/server/QuestServer.luau" },
       "AdminServer": { "$path": "src/server/AdminServer.luau" },
+      "BoostServer": { "$path": "src/server/BoostServer.luau" },
+      "RebirthServer": { "$path": "src/server/RebirthServer.luau" },
+      "RewardsServer": { "$path": "src/server/RewardsServer.luau" },
+      "LeaderboardServer": { "$path": "src/server/LeaderboardServer.server.luau" },
       "GameManager": { "$path": "src/server/GameManager.server.luau" },
       "IslandGenerator": { "$path": "src/server/IslandGenerator.server.luau" },
       "MobAI": { "$path": "src/server/MobAI.server.luau" },
@@ -76,7 +83,9 @@
         "DialogueClient": { "$path": "src/client/DialogueClient.client.luau" },
         "StationClient": { "$path": "src/client/StationClient.client.luau" },
         "QuestClient": { "$path": "src/client/QuestClient.client.luau" },
-        "AdminClient": { "$path": "src/client/AdminClient.client.luau" }
+        "AdminClient": { "$path": "src/client/AdminClient.client.luau" },
+        "RebirthClient": { "$path": "src/client/RebirthClient.client.luau" },
+        "RewardsClient": { "$path": "src/client/RewardsClient.client.luau" }
       }
     },
 

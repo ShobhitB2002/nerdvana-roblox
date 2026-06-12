@@ -18,17 +18,27 @@ local panel = masteryGui:WaitForChild("MasteryPanel") :: Frame
 local BarMap: { [string]: Frame } = {
 	Wood = panel:WaitForChild("WoodMasteryBar") :: Frame,
 	Hide = panel:WaitForChild("HideMasteryBar") :: Frame,
+	Ore = panel:WaitForChild("OreMasteryBar") :: Frame,
+	Stone = panel:WaitForChild("StoneMasteryBar") :: Frame,
+	Fishing = panel:WaitForChild("FishingMasteryBar") :: Frame,
 	Sword = panel:WaitForChild("SwordMasteryBar") :: Frame,
 	Leather = panel:WaitForChild("LeatherMasteryBar") :: Frame,
 	Tool = panel:WaitForChild("ToolMasteryBar") :: Frame,
+	Refining = panel:WaitForChild("RefiningMasteryBar") :: Frame,
+	Blacksmithing = panel:WaitForChild("BlacksmithingMasteryBar") :: Frame,
 }
 
 local MasteryColors: { [string]: Color3 } = {
 	Wood = Color3.fromRGB(140, 90, 40),
 	Hide = Color3.fromRGB(200, 140, 80),
+	Ore = Color3.fromRGB(120, 120, 140),
+	Stone = Color3.fromRGB(150, 150, 150),
+	Fishing = Color3.fromRGB(90, 170, 220),
 	Sword = Color3.fromRGB(100, 180, 255),
 	Leather = Color3.fromRGB(180, 100, 60),
 	Tool = Color3.fromRGB(160, 160, 160),
+	Refining = Color3.fromRGB(210, 140, 60),
+	Blacksmithing = Color3.fromRGB(90, 90, 110),
 }
 
 local function updateBars(mastery: { [string]: number })

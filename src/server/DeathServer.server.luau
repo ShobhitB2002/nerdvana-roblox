@@ -63,6 +63,11 @@ local function onPlayerDied(player: Player)
 		dtag.Value = dropped.id
 		dtag.Parent = dropPart
 
+		local qtag = Instance.new("IntValue")
+		qtag.Name = "Quantity"
+		qtag.Value = dropped.quantity or 1
+		qtag.Parent = dropPart
+
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.ActionText = "Pick up " .. (if def then def.name else dropped.id)
 		prompt.MaxActivationDistance = 5
