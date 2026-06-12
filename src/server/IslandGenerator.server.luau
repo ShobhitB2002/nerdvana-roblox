@@ -206,6 +206,7 @@ local stationDefs: { StationDef } = {
 	{ name = "MerchantStall", label = "Merchant Stall", pos = Vector3.new(-14, 0, 44), color = "Bright green", size = Vector3.new(8, 4, 6) },
 	{ name = "ExchangeBoard", label = "Marketplace Board", pos = Vector3.new(14, 0, 44), color = "Medium stone grey", size = Vector3.new(5, 6, 1), comingSoon = true },
 	{ name = "RebirthShrine", label = "Rebirth Shrine", pos = Vector3.new(0, 0, -38), color = "Royal purple", size = Vector3.new(7, 7, 7) },
+	{ name = "EggStand", label = "Companion Eggs", pos = Vector3.new(-38, 0, -38), color = "Bright violet", size = Vector3.new(6, 5, 6) },
 }
 
 local function buildStation(sd: StationDef, parent: Folder, posOverride: Vector3?)

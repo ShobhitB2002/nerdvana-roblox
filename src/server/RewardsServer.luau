@@ -5,6 +5,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local DataServer = require(script.Parent.DataServer)
+local QuestServer = require(script.Parent.QuestServer)
 local GameConfig = require(ReplicatedStorage.Modules.GameConfig)
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
@@ -20,11 +21,44 @@ local function dailyAvailable(data: any): boolean
 	return os.time() - data.lastDailyClaim >= GameConfig.DAILY_COOLDOWN
 end
 
+-- ============================================================
+-- Daily quest: one rotating task per UTC day, same for everyone
+-- ============================================================
+
+type DailyTask = { action: string, key: string, qty: number, label: string }
+local DAILY_TASKS: { DailyTask } = {
+	{ action = "kill", key = "Wolf", qty = 20, label = "Slay 20 Wolves" },
+	{ action = "collect", key = "raw_wood_t1", qty = 100, label = "Gather 100 Raw Wood" },
+	{ action = "kill", key = "Bandit", qty = 15, label = "Defeat 15 Bandits" },
+	{ action = "collect", key = "raw_fish", qty = 15, label = "Catch 15 Fish" },
+	{ action = "collect", key = "raw_stone_t1", qty = 50, label = "Quarry 50 Stone" },
+	{ action = "craft", key = "refine_raw_wood_t1", qty = 10, label = "Refine 10 Planks" },
+	{ action = "collect", key = "raw_ore_t1", qty = 50, label = "Mine 50 Ore" },
+}
+local DAILY_QUEST_GOLD = 750
+local DAILY_QUEST_DIAMONDS = 5
+
+local function utcDay(): number
+	return math.floor(os.time() / 86400)
+end
+
+local function ensureDailyQuest(data: any)
+	local today = utcDay()
+	if data.dailyQuest.day ~= today then
+		data.dailyQuest.day = today
+		data.dailyQuest.taskIdx = (today % #DAILY_TASKS) + 1
+		data.dailyQuest.progress = 0
+		data.dailyQuest.done = false
+	end
+end
+
 local function pushState(player: Player)
 	local data = DataServer.Get(player)
 	if not data then
 		return
 	end
+	ensureDailyQuest(data)
+	local task_ = DAILY_TASKS[data.dailyQuest.taskIdx] or DAILY_TASKS[1]
 	local sessionMinutes = (os.time() - (SessionStart[player.UserId] or os.time())) / 60
 	local chests = {}
 	for i, chest in ipairs(GameConfig.PLAYTIME_CHESTS) do
@@ -42,6 +76,14 @@ local function pushState(player: Player)
 		nextDailyIn = math.max(0, GameConfig.DAILY_COOLDOWN - (os.time() - data.lastDailyClaim)),
 		sessionMinutes = math.floor(sessionMinutes),
 		chests = chests,
+		dailyQuest = {
+			label = task_.label,
+			progress = math.min(data.dailyQuest.progress, task_.qty),
+			qty = task_.qty,
+			done = data.dailyQuest.done,
+			gold = DAILY_QUEST_GOLD,
+			diamonds = DAILY_QUEST_DIAMONDS,
+		},
 	})
 end
 
@@ -139,6 +181,30 @@ RewardsAction.OnServerEvent:Connect(function(player: Player, cmd: unknown, paylo
 			RewardsServer.RedeemCode(player, payload :: string)
 		end
 	end
+end)
+
+-- Track player actions for the daily quest
+QuestServer.RegisterListener(function(player: Player, actionType: string, key: string, qty: number)
+	local data = DataServer.Get(player)
+	if not data then
+		return
+	end
+	ensureDailyQuest(data)
+	if data.dailyQuest.done then
+		return
+	end
+	local task_ = DAILY_TASKS[data.dailyQuest.taskIdx]
+	if not task_ or task_.action ~= actionType or task_.key ~= key then
+		return
+	end
+	data.dailyQuest.progress += qty
+	if data.dailyQuest.progress >= task_.qty then
+		data.dailyQuest.done = true
+		grant(player, DAILY_QUEST_GOLD, DAILY_QUEST_DIAMONDS)
+		DataServer.Save(player)
+		RewardsAction:FireClient(player, "claimed", { kind = "dailyQuest", gold = DAILY_QUEST_GOLD, diamonds = DAILY_QUEST_DIAMONDS })
+	end
+	pushState(player)
 end)
 
 Players.PlayerAdded:Connect(function(player: Player)

@@ -55,6 +55,7 @@ export type PlayerSave = {
 	index: { items: { [string]: boolean }, mobs: { [string]: boolean }, companions: { [string]: boolean } },
 	indexClaimed: { [string]: boolean },
 	redeemedCodes: { [string]: boolean },
+	dailyQuest: { day: number, taskIdx: number, progress: number, done: boolean },
 	boostsUntil: { [string]: number },
 	purchaseIds: { string },
 	cosmetics: { owned: { [string]: boolean }, equippedAura: string? },
@@ -117,6 +118,7 @@ local function defaultData(): PlayerSave
 		index = { items = {}, mobs = {}, companions = {} },
 		indexClaimed = {},
 		redeemedCodes = {},
+		dailyQuest = { day = 0, taskIdx = 0, progress = 0, done = false },
 		boostsUntil = {},
 		purchaseIds = {},
 		cosmetics = { owned = {}, equippedAura = nil },
@@ -158,6 +160,7 @@ local function mergeLoaded(loaded: { [string]: any }): PlayerSave
 	mergeTable(da, loaded, "equippedCompanions")
 	mergeTable(da, loaded, "indexClaimed")
 	mergeTable(da, loaded, "redeemedCodes")
+	mergeTable(da, loaded, "dailyQuest")
 	mergeTable(da, loaded, "boostsUntil")
 	mergeTable(da, loaded, "purchaseIds")
 

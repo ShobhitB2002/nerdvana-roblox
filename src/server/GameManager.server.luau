@@ -13,6 +13,8 @@ local ok, err = pcall(function()
 	require(script.Parent.BoostServer)
 	require(script.Parent.RebirthServer)
 	require(script.Parent.RewardsServer)
+	require(script.Parent.CompanionServer)
+	require(script.Parent.IndexServer)
 end)
 if ok then
 	print("[Nerdvana] All systems loaded.")

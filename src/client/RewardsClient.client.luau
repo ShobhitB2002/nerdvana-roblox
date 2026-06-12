@@ -30,8 +30,8 @@ backdropBtn.BorderSizePixel = 0
 backdropBtn.Parent = gui
 
 local win = Instance.new("Frame")
-win.Position = UDim2.new(0.5, -240, 0.5, -220)
-win.Size = UDim2.new(0, 480, 0, 440)
+win.Position = UDim2.new(0.5, -240, 0.5, -235)
+win.Size = UDim2.new(0, 480, 0, 470)
 win.BackgroundColor3 = Color3.fromRGB(16, 24, 18)
 win.BorderSizePixel = 0
 win.Visible = false
@@ -103,11 +103,13 @@ claimDailyBtn.BorderSizePixel = 0
 claimDailyBtn.Text = "..."
 claimDailyBtn.Parent = win
 
-label(win, { Text = "PLAYTIME CHESTS (this session)", Position = UDim2.new(0, 0, 0, 138), Size = UDim2.new(1, 0, 0, 22), Font = Enum.Font.GothamBold, TextColor3 = Color3.fromRGB(255, 200, 90) })
+local dailyQuestLbl = label(win, { Text = "", Position = UDim2.new(0, 10, 0, 134), Size = UDim2.new(1, -20, 0, 24), TextColor3 = Color3.fromRGB(255, 230, 120) })
+
+label(win, { Text = "PLAYTIME CHESTS (this session)", Position = UDim2.new(0, 0, 0, 162), Size = UDim2.new(1, 0, 0, 22), Font = Enum.Font.GothamBold, TextColor3 = Color3.fromRGB(255, 200, 90) })
 
 local chestList = Instance.new("ScrollingFrame")
-chestList.Position = UDim2.new(0, 8, 0, 162)
-chestList.Size = UDim2.new(1, -16, 1, -232)
+chestList.Position = UDim2.new(0, 8, 0, 186)
+chestList.Size = UDim2.new(1, -16, 1, -256)
 chestList.BackgroundTransparency = 1
 chestList.ScrollBarThickness = 6
 chestList.BorderSizePixel = 0
@@ -141,12 +143,14 @@ codeBtn.Parent = win
 local codeResult = label(win, { Text = "", Position = UDim2.new(0, 10, 1, -26), Size = UDim2.new(1, -20, 0, 20) })
 
 type ChestState = { minutes: number, gold: number?, diamonds: number?, ready: boolean, claimed: boolean }
+type DailyQuestState = { label: string, progress: number, qty: number, done: boolean, gold: number, diamonds: number }
 type RState = {
 	dailyAvailable: boolean,
 	streak: number,
 	nextDailyIn: number,
 	sessionMinutes: number,
 	chests: { ChestState },
+	dailyQuest: DailyQuestState?,
 }
 
 local lastState: RState? = nil
@@ -186,6 +190,17 @@ local function render()
 		local mins = math.floor((s.nextDailyIn % 3600) / 60)
 		claimDailyBtn.Text = string.format("Next gift in %dh %dm (streak %d)", hrs, mins, s.streak)
 		claimDailyBtn.BackgroundColor3 = Color3.fromRGB(60, 70, 65)
+	end
+
+	local dq = s.dailyQuest
+	if dq then
+		if dq.done then
+			dailyQuestLbl.Text = "Daily Quest: " .. dq.label .. " — DONE!"
+			dailyQuestLbl.TextColor3 = Color3.fromRGB(120, 230, 140)
+		else
+			dailyQuestLbl.Text = string.format("Daily Quest: %s (%d/%d) — %dg + %d dia", dq.label, dq.progress, dq.qty, dq.gold, dq.diamonds)
+			dailyQuestLbl.TextColor3 = Color3.fromRGB(255, 230, 120)
+		end
 	end
 
 	for _, child in ipairs(chestList:GetChildren()) do

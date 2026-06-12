@@ -104,8 +104,8 @@ OpenStation.OnClientEvent:Connect(function(stationKey: unknown, recipes: unknown
 	if typeof(stationKey) ~= "string" then
 		return
 	end
-	if stationKey == "rebirthshrine" then
-		return -- handled by RebirthClient
+	if stationKey == "rebirthshrine" or stationKey == "eggstand" then
+		return -- handled by RebirthClient / CompanionClient
 	end
 	local r: { RecipeDB.Recipe }
 	if typeof(recipes) == "table" then
