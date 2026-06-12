@@ -233,11 +233,14 @@ local function onPickup(player: Player, dropPart: BasePart)
 	end
 end
 
+local ResourceNodes: { BasePart } = {}
+
 local function hookTreeTrunk(part: Instance)
 	if part:IsA("BasePart") then
 		local prompt = part:FindFirstChildOfClass("ProximityPrompt")
 		local rtag = part:FindFirstChild("ResourceType")
 		if prompt and rtag then
+			table.insert(ResourceNodes, part)
 			prompt.Triggered:Connect(function(player: Player)
 				onGather(player, part)
 			end)
@@ -359,6 +362,35 @@ for _, desc in ipairs(workspace:GetDescendants()) do
 	hookTreeTrunk(desc)
 end
 workspace.DescendantAdded:Connect(hookTreeTrunk)
+
+-- Auto-Gather gamepass: harvests the nearest resource node automatically
+task.spawn(function()
+	while true do
+		task.wait(3)
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player:GetAttribute("AutoGather") == true then
+				local char = player.Character
+				local root = if char then char.PrimaryPart else nil
+				if root then
+					local best: BasePart? = nil
+					local bestDist = 24
+					for _, node in ipairs(ResourceNodes) do
+						if node.Parent then
+							local d = (node.Position - root.Position).Magnitude
+							if d < bestDist then
+								bestDist = d
+								best = node
+							end
+						end
+					end
+					if best then
+						onGather(player, best)
+					end
+				end
+			end
+		end
+	end
+end)
 
 -- Magnet Soul rebirth perk / AutoPickup gamepass: nearby drops collect themselves
 task.spawn(function()

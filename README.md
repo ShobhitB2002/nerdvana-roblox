@@ -13,14 +13,27 @@ Roblox MMORPG survival grinder — Albion-style gear progression, Rust-style mat
 | --- | --- |
 | E | Gather / use station / portal |
 | F | Talk to NPC |
-| Left click | Attack |
-| I or Bag button | Inventory |
+| Left click (or ⚔ on mobile) | Attack |
+| I / Bag | Inventory |
 | M | Mastery panel |
+| R / Rebirth | Rebirth window |
+| C / Pets | Companions & eggs |
+| N / Index | Collection index |
+| G / Gifts | Daily rewards, playtime chests, codes |
+| B / Shop | Robux + diamond shop |
+| P | Admin panel (owner only) |
 | Shift | Sprint |
 
-## Tutorial loop
+## Core loops
 
-Gather wood → refine planks (Sawmill) → craft axe → kill wolves → tan leather → craft armor → craft T2 sword (Forge, costs gold) → defeat Bandit Captain → defeat Ancient Gorehorn → unlock Corrupted Portal → NG+ corrupted island (harder mobs, double mastery XP, better rarity rolls).
+1. **Tutorial:** gather → refine → craft → fight → Bandit Captain → Ancient Gorehorn → Corrupted Portal (NG+ island).
+2. **Rebirth:** beat the Beast Boss → rebirth at the shrine → permanent +25% gold/XP per rebirth + tokens for the perk shop; world hits harder each rebirth.
+3. **Collect:** hatch companions from 4 egg tiers (secret 1-in-2000 VOID LORD), fuse dupes, fill the index for diamond milestones, climb village leaderboards.
+4. **Return:** daily login streak, rotating daily quest, playtime chests, promo codes.
+
+## Monetization
+
+All Robux products are config-driven — see [MONETIZATION_SETUP.md](MONETIZATION_SETUP.md) for the exact passes/products to create and where to paste their IDs. Safe to publish before doing so (shop shows "Coming Soon").
 
 ## Development
 

@@ -160,6 +160,7 @@ do
 		{ name = "RebirthButton", text = "Rebirth", color = Color3.fromRGB(80, 40, 110) },
 		{ name = "PetsButton", text = "Pets", color = Color3.fromRGB(110, 75, 30) },
 		{ name = "IndexButton", text = "Index", color = Color3.fromRGB(35, 65, 95) },
+		{ name = "ShopButton", text = "Shop", color = Color3.fromRGB(30, 90, 60) },
 	}
 	for i, def in ipairs(sideButtons) do
 		textButton({

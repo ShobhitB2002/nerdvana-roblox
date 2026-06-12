@@ -8,6 +8,7 @@
         "$className": "Folder",
         "GameConfig": { "$path": "src/ReplicatedStorage/Modules/GameConfig.luau" },
         "CompanionDB": { "$path": "src/ReplicatedStorage/Modules/CompanionDB.luau" },
+        "MonetizationConfig": { "$path": "src/ReplicatedStorage/Modules/MonetizationConfig.luau" },
         "ItemDB": { "$path": "src/ReplicatedStorage/Modules/ItemDB.luau" },
         "RecipeDB": { "$path": "src/ReplicatedStorage/Modules/RecipeDB.luau" },
         "MasteryDB": { "$path": "src/ReplicatedStorage/Modules/MasteryDB.luau" },
@@ -41,7 +42,8 @@
         "RebirthAction": { "$className": "RemoteEvent" },
         "RewardsAction": { "$className": "RemoteEvent" },
         "CompanionAction": { "$className": "RemoteEvent" },
-        "IndexAction": { "$className": "RemoteEvent" }
+        "IndexAction": { "$className": "RemoteEvent" },
+        "ShopAction": { "$className": "RemoteEvent" }
       }
     },
 
@@ -54,6 +56,7 @@
       "RewardsServer": { "$path": "src/server/RewardsServer.luau" },
       "CompanionServer": { "$path": "src/server/CompanionServer.luau" },
       "IndexServer": { "$path": "src/server/IndexServer.luau" },
+      "ShopServer": { "$path": "src/server/ShopServer.luau" },
       "LeaderboardServer": { "$path": "src/server/LeaderboardServer.server.luau" },
       "GameManager": { "$path": "src/server/GameManager.server.luau" },
       "IslandGenerator": { "$path": "src/server/IslandGenerator.server.luau" },
@@ -92,7 +95,9 @@
         "RebirthClient": { "$path": "src/client/RebirthClient.client.luau" },
         "RewardsClient": { "$path": "src/client/RewardsClient.client.luau" },
         "CompanionClient": { "$path": "src/client/CompanionClient.client.luau" },
-        "IndexClient": { "$path": "src/client/IndexClient.client.luau" }
+        "IndexClient": { "$path": "src/client/IndexClient.client.luau" },
+        "ShopClient": { "$path": "src/client/ShopClient.client.luau" },
+        "SFXClient": { "$path": "src/client/SFXClient.client.luau" }
       }
     },
 

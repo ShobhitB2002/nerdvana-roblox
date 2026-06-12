@@ -71,6 +71,19 @@ UserInputService.InputBegan:Connect(function(input: InputObject, processed: bool
 	end
 end)
 
+-- Touch devices get a dedicated attack button
+if UserInputService.TouchEnabled then
+	local ContextActionService = game:GetService("ContextActionService")
+	ContextActionService:BindAction("NerdvanaAttack", function(_name: string, state: Enum.UserInputState)
+		if state == Enum.UserInputState.Begin then
+			tryHit()
+		end
+		return Enum.ContextActionResult.Sink
+	end, true)
+	ContextActionService:SetTitle("NerdvanaAttack", "⚔️")
+	ContextActionService:SetPosition("NerdvanaAttack", UDim2.new(0.72, 0, 0.55, 0))
+end
+
 PlayerDied.OnClientEvent:Connect(function(dropped: unknown)
 	local msg = "You died! Durability lost."
 	if typeof(dropped) == "table" then

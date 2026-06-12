@@ -15,6 +15,7 @@ local ok, err = pcall(function()
 	require(script.Parent.RewardsServer)
 	require(script.Parent.CompanionServer)
 	require(script.Parent.IndexServer)
+	require(script.Parent.ShopServer)
 end)
 if ok then
 	print("[Nerdvana] All systems loaded.")
