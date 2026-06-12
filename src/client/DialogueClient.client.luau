@@ -10,6 +10,7 @@ local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
 local DialogueEvent = Remotes:WaitForChild("DialogueEvent") :: RemoteEvent
 
 local QuestDB = require(ReplicatedStorage.Modules.QuestDB)
+local UIStyle = require(ReplicatedStorage.Modules.UIStyle)
 
 local dialogueGui = PlayerGui:WaitForChild("DialogueGui") :: ScreenGui
 local dialogueBox = dialogueGui:WaitForChild("DialogueBox") :: Frame
@@ -101,6 +102,7 @@ DialogueEvent.OnClientEvent:Connect(function(npcId: unknown)
 	end
 	optionsFrame.CanvasSize = UDim2.new(0, 0, 0, y)
 
+	UIStyle.Apply(dialogueBox)
 	setOpen(true)
 end)
 

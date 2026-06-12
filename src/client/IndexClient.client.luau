@@ -13,6 +13,7 @@ local IndexAction = Remotes:WaitForChild("IndexAction") :: RemoteEvent
 local ItemDB = require(ReplicatedStorage.Modules.ItemDB)
 local MobDB = require(ReplicatedStorage.Modules.MobDB)
 local CompanionDB = require(ReplicatedStorage.Modules.CompanionDB)
+local UIStyle = require(ReplicatedStorage.Modules.UIStyle)
 
 local MILESTONES = { 25, 50, 75, 100 }
 local MILESTONE_DIAMONDS = { 5, 10, 15, 30 }
@@ -225,6 +226,7 @@ local function render()
 	end
 
 	content.CanvasSize = UDim2.new(0, 0, 0, y)
+	UIStyle.Apply(win)
 end
 
 for i, tabDef in ipairs(TABS) do

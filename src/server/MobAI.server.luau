@@ -79,14 +79,19 @@ local SpawnPoints: { SpawnPoint } = {
 	{ mobId = "Wolf", pos = Vector3.new(-600, 3, -120), count = 5 },
 	{ mobId = "GoldenWolf", pos = Vector3.new(-650, 3, -250), count = 1 },
 
-	-- East rocks: elementals guard the ore fields
-	{ mobId = "Elemental", pos = Vector3.new(220, 3, -60), count = 4 },
-	{ mobId = "Elemental", pos = Vector3.new(290, 3, 90), count = 3 },
-	{ mobId = "MountainMiniboss", pos = Vector3.new(380, 3, 0), count = 1 },
+	-- Snow biome (north): elementals + frost wolves guard the ore fields
+	{ mobId = "Elemental", pos = Vector3.new(250, 3, -450), count = 4 },
+	{ mobId = "Elemental", pos = Vector3.new(-150, 3, -550), count = 3 },
+	{ mobId = "Wolf", pos = Vector3.new(100, 3, -620), count = 4 },
+	{ mobId = "MountainMiniboss", pos = Vector3.new(450, 3, -380), count = 1 },
 
-	-- Mine Cave (northeast): crystal golems
+	-- Frozen Mine (northeast): crystal golems
 	{ mobId = "CrystalGolem", pos = Vector3.new(540, 3, -540), count = 4 },
 	{ mobId = "CrystalGolem", pos = Vector3.new(600, 3, -600), count = 3 },
+
+	-- Desert (east): elementals + bandits
+	{ mobId = "Elemental", pos = Vector3.new(620, 3, 120), count = 3 },
+	{ mobId = "Bandit", pos = Vector3.new(700, 3, 300), count = 4 },
 
 	-- South plains: bandit camp + captain arena
 	{ mobId = "Bandit", pos = Vector3.new(120, 3, 220), count = 4 },
@@ -377,6 +382,36 @@ local function onMobDeath(
 				BossServer.OnBeastBossDefeated(nearestPlayer)
 			end
 		end
+	end
+
+	-- Death poof
+	do
+		local poof = Instance.new("Part")
+		poof.Anchored = true
+		poof.CanCollide = false
+		poof.CanQuery = false
+		poof.Transparency = 1
+		poof.Size = Vector3.new(1, 1, 1)
+		poof.Position = pos + Vector3.new(0, 2, 0)
+		poof.Parent = workspace
+		local att = Instance.new("Attachment")
+		att.Parent = poof
+		local pe = Instance.new("ParticleEmitter")
+		pe.Texture = "rbxasset://textures/particles/smoke_main.dds"
+		pe.Rate = 0
+		pe.Lifetime = NumberRange.new(0.4, 0.8)
+		pe.Speed = NumberRange.new(4, 9)
+		pe.SpreadAngle = Vector2.new(180, 180)
+		pe.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1.6),
+			NumberSequenceKeypoint.new(1, 0.2),
+		})
+		pe.Color = ColorSequence.new(def.modelColor)
+		pe.Parent = att
+		pe:Emit(18)
+		task.delay(1.2, function()
+			poof:Destroy()
+		end)
 	end
 
 	dropLoot(def, pos)

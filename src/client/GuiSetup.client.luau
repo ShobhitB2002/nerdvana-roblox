@@ -2,6 +2,8 @@
 -- Builds PlayerGui for Nerdvana (Rojo-friendly; matches script WaitForChild paths)
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UIStyle = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("UIStyle"))
 local player = Players.LocalPlayer
 local pg = player:WaitForChild("PlayerGui")
 
@@ -443,6 +445,13 @@ do
 		TextWrapped = true,
 		TextScaled = true,
 	})
+end
+
+-- Kid-friendly rounding/strokes on everything built above
+for _, child in ipairs(pg:GetChildren()) do
+	if child:IsA("ScreenGui") then
+		UIStyle.Apply(child)
+	end
 end
 
 print("[Nerdvana] GuiSetup ready")

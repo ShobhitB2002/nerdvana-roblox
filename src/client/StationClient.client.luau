@@ -12,6 +12,7 @@ local OpenStation = Remotes:WaitForChild("OpenStation") :: RemoteEvent
 
 local RecipeDB = require(ReplicatedStorage.Modules.RecipeDB)
 local ItemDB = require(ReplicatedStorage.Modules.ItemDB)
+local UIStyle = require(ReplicatedStorage.Modules.UIStyle)
 
 local stationGui = PlayerGui:WaitForChild("StationGui") :: ScreenGui
 local stationFrame = stationGui:WaitForChild("StationFrame") :: Frame
@@ -97,6 +98,7 @@ local function renderRecipes(_stationKey: string, recipes: { RecipeDB.Recipe })
 		y += 65
 	end
 	recipeList.CanvasSize = UDim2.new(0, 0, 0, y)
+	UIStyle.Apply(stationFrame)
 	setOpen(true)
 end
 

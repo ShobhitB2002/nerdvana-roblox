@@ -4,7 +4,7 @@
 local GameConfig = {}
 
 -- World
-GameConfig.MAP_HALF = 800 -- main island is 1600x1600
+GameConfig.MAP_HALF = 1000 -- main island is 2000x2000
 GameConfig.VILLAGE_RADIUS = 95
 GameConfig.CORRUPT_OFFSET = Vector3.new(3000, 0, 0)
 GameConfig.CORRUPT_SAFE_RADIUS = 45

@@ -12,6 +12,7 @@ local RebirthAction = Remotes:WaitForChild("RebirthAction") :: RemoteEvent
 local OpenStation = Remotes:WaitForChild("OpenStation") :: RemoteEvent
 
 local GameConfig = require(ReplicatedStorage.Modules.GameConfig)
+local UIStyle = require(ReplicatedStorage.Modules.UIStyle)
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "RebirthGui"
@@ -182,6 +183,7 @@ local function render()
 		y += 52
 	end
 	perkList.CanvasSize = UDim2.new(0, 0, 0, y)
+	UIStyle.Apply(win)
 end
 
 rebirthBtn.MouseButton1Click:Connect(function()

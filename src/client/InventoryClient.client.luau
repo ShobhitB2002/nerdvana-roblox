@@ -13,6 +13,7 @@ local UpdateInventory = Remotes:WaitForChild("UpdateInventory") :: RemoteEvent
 
 local ItemDB = require(ReplicatedStorage.Modules.ItemDB)
 local Shared = require(ReplicatedStorage.Modules.Shared)
+local UIStyle = require(ReplicatedStorage.Modules.UIStyle)
 
 local invGui = PlayerGui:WaitForChild("InventoryGui") :: ScreenGui
 local background = invGui:WaitForChild("Background") :: Frame
@@ -190,6 +191,7 @@ local function renderInventory()
 		y += 55
 	end
 	itemList.CanvasSize = UDim2.new(0, 0, 0, y)
+	UIStyle.Apply(background)
 end
 
 for _, tab in ipairs(tabRow:GetChildren()) do

@@ -11,6 +11,7 @@ local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
 local RewardsAction = Remotes:WaitForChild("RewardsAction") :: RemoteEvent
 
 local GameConfig = require(ReplicatedStorage.Modules.GameConfig)
+local UIStyle = require(ReplicatedStorage.Modules.UIStyle)
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "RewardsGui"
@@ -251,6 +252,7 @@ local function render()
 		y += 40
 	end
 	chestList.CanvasSize = UDim2.new(0, 0, 0, y)
+	UIStyle.Apply(win)
 end
 
 claimDailyBtn.MouseButton1Click:Connect(function()

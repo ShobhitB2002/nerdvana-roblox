@@ -234,15 +234,58 @@ local function syncVisuals(player: Player)
 	for i, compId in ipairs(want) do
 		local def = CompanionDB.Get(compId)
 		if def then
+			local rarityColor = CompanionDB.RarityColors[def.rarity] or Color3.fromRGB(220, 220, 220)
+
 			local p = Instance.new("Part")
 			p.Name = "Companion_" .. compId
-			p.Size = Vector3.new(1.6, 1.6, 1.6)
+			p.Size = Vector3.new(1.8, 1.8, 1.8)
+			p.Shape = Enum.PartType.Ball
 			p.Anchored = true
 			p.CanCollide = false
 			p.CanQuery = false
+			p.CastShadow = false
 			p.Color = def.color
-			p.Material = Enum.Material.Neon
+			p.Material = Enum.Material.SmoothPlastic
 			p:SetAttribute("CompanionId", compId)
+
+			-- Little face so it reads as a creature
+			local face = Instance.new("Decal")
+			face.Texture = "rbxasset://textures/face.png"
+			face.Face = Enum.NormalId.Front
+			face.Parent = p
+
+			-- Rarity-colored trail
+			local a0 = Instance.new("Attachment")
+			a0.Position = Vector3.new(0, 0.6, 0)
+			a0.Parent = p
+			local a1 = Instance.new("Attachment")
+			a1.Position = Vector3.new(0, -0.6, 0)
+			a1.Parent = p
+			local trail = Instance.new("Trail")
+			trail.Attachment0 = a0
+			trail.Attachment1 = a1
+			trail.Color = ColorSequence.new(rarityColor)
+			trail.Transparency = NumberSequence.new(0.4, 1)
+			trail.Lifetime = 0.45
+			trail.LightEmission = 0.6
+			trail.Parent = p
+
+			-- Epic+ sparkle aura
+			if def.rarity == "Epic" or def.rarity == "Legendary" or def.rarity == "Mythic" then
+				local pe = Instance.new("ParticleEmitter")
+				pe.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+				pe.Rate = 6
+				pe.Lifetime = NumberRange.new(0.5, 1)
+				pe.Speed = NumberRange.new(0.5, 1.5)
+				pe.SpreadAngle = Vector2.new(180, 180)
+				pe.LightEmission = 0.8
+				pe.Size = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 0.5),
+					NumberSequenceKeypoint.new(1, 0.05),
+				})
+				pe.Color = ColorSequence.new(rarityColor)
+				pe.Parent = a0
+			end
 
 			local bb = Instance.new("BillboardGui")
 			bb.Size = UDim2.new(0, 120, 0, 24)
@@ -253,7 +296,7 @@ local function syncVisuals(player: Player)
 			lbl.Font = Enum.Font.GothamBold
 			lbl.TextScaled = true
 			lbl.Text = def.name
-			lbl.TextColor3 = CompanionDB.RarityColors[def.rarity] or Color3.fromRGB(220, 220, 220)
+			lbl.TextColor3 = rarityColor
 			lbl.Parent = bb
 			bb.Parent = p
 
@@ -279,7 +322,12 @@ RunService.Heartbeat:Connect(function(dt: number)
 				local angle = (i / #parts) * math.pi * 2 + t * 0.8
 				local target = root.Position
 					+ Vector3.new(math.cos(angle) * 4, 2.2 + math.sin(t * 2 + i) * 0.4, math.sin(angle) * 4)
-				part.CFrame = part.CFrame:Lerp(CFrame.new(target), math.clamp(dt * 6, 0, 1))
+				-- face the player so the little face shows (guard against zero direction)
+				local lookDir = Vector3.new(root.Position.X - target.X, 0, root.Position.Z - target.Z)
+				local goal = if lookDir.Magnitude > 0.05
+					then CFrame.lookAt(target, target + lookDir)
+					else CFrame.new(target)
+				part.CFrame = part.CFrame:Lerp(goal, math.clamp(dt * 6, 0, 1))
 			end
 		end
 	end

@@ -9,6 +9,7 @@
         "GameConfig": { "$path": "src/ReplicatedStorage/Modules/GameConfig.luau" },
         "CompanionDB": { "$path": "src/ReplicatedStorage/Modules/CompanionDB.luau" },
         "MonetizationConfig": { "$path": "src/ReplicatedStorage/Modules/MonetizationConfig.luau" },
+        "UIStyle": { "$path": "src/ReplicatedStorage/Modules/UIStyle.luau" },
         "ItemDB": { "$path": "src/ReplicatedStorage/Modules/ItemDB.luau" },
         "RecipeDB": { "$path": "src/ReplicatedStorage/Modules/RecipeDB.luau" },
         "MasteryDB": { "$path": "src/ReplicatedStorage/Modules/MasteryDB.luau" },
@@ -111,19 +112,50 @@
           "Anchored": true,
           "CanCollide": false,
           "Neutral": true,
-          "Position": [0, 10, 0],
-          "Size": [6, 1, 6]
+          "Position": [0, 0.95, 0],
+          "Size": [8, 0.6, 8]
         }
       }
     },
 
     "Lighting": {
       "$properties": {
-        "Ambient": [0.5, 0.5, 0.5],
-        "Brightness": 2,
+        "Ambient": [0.58, 0.58, 0.62],
+        "OutdoorAmbient": [0.55, 0.55, 0.6],
+        "Brightness": 2.4,
+        "ClockTime": 13.8,
         "GlobalShadows": true,
         "Outlines": false,
-        "Technology": "Voxel"
+        "EnvironmentDiffuseScale": 0.5,
+        "EnvironmentSpecularScale": 0.5,
+        "Technology": "ShadowMap"
+      },
+      "Atmosphere": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.28,
+          "Offset": 0.25,
+          "Color": [0.78, 0.85, 0.92],
+          "Decay": [0.42, 0.56, 0.77],
+          "Glare": 0.2,
+          "Haze": 1.5
+        }
+      },
+      "Bloom": {
+        "$className": "BloomEffect",
+        "$properties": {
+          "Intensity": 0.4,
+          "Size": 24,
+          "Threshold": 1.2
+        }
+      },
+      "ColorCorrection": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Saturation": 0.12,
+          "Contrast": 0.04,
+          "Brightness": 0.01
+        }
       }
     },
 

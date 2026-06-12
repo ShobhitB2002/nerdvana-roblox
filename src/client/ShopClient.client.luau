@@ -12,6 +12,7 @@ local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
 local ShopAction = Remotes:WaitForChild("ShopAction") :: RemoteEvent
 
 local MonetizationConfig = require(ReplicatedStorage.Modules.MonetizationConfig)
+local UIStyle = require(ReplicatedStorage.Modules.UIStyle)
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "ShopGui"
@@ -229,6 +230,7 @@ local function render()
 	end
 
 	content.CanvasSize = UDim2.new(0, 0, 0, y)
+	UIStyle.Apply(win)
 end
 
 local TABS = {

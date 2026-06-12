@@ -10,6 +10,7 @@ local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 local Remotes = ReplicatedStorage:WaitForChild("Remotes") :: Folder
 local AdminCommand = Remotes:WaitForChild("AdminCommand") :: RemoteEvent
+local UIStyle = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("UIStyle"))
 
 type AdminState = {
 	gatherMult: number,
@@ -241,6 +242,7 @@ local function buildPanel()
 	status.TextScaled = true
 	status.Parent = p
 	statusLabel = status
+	UIStyle.Apply(p)
 end
 
 local function applyState(s: AdminState)

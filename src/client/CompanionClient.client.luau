@@ -13,6 +13,7 @@ local CompanionAction = Remotes:WaitForChild("CompanionAction") :: RemoteEvent
 local OpenStation = Remotes:WaitForChild("OpenStation") :: RemoteEvent
 
 local CompanionDB = require(ReplicatedStorage.Modules.CompanionDB)
+local UIStyle = require(ReplicatedStorage.Modules.UIStyle)
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "CompanionGui"
@@ -295,6 +296,7 @@ local function render()
 	else
 		renderMine()
 	end
+	UIStyle.Apply(win)
 end
 
 eggsTabBtn.MouseButton1Click:Connect(function()
